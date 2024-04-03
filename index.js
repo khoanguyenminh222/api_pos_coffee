@@ -16,7 +16,12 @@ app.get('/api/data', (req, res) => {
   res.json({ message: 'Welcome to my API!' });
 });
 
-mongoose.connect(process.env.Connection_String)
+// Thiết lập các tùy chọn thời gian chờ cho kết nối MongoDB
+const mongooseOptions = {
+  serverSelectionTimeoutMS: 10000, // Thiết lập thời gian chờ kết nối MongoDB
+};
+
+mongoose.connect(process.env.Connection_String, mongooseOptions)
   .then(() => {
     console.log("Database is connecting");
   })
