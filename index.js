@@ -3,6 +3,8 @@ const cors = require('cors');
 const app = express();
 const morgan = require('morgan');
 const mongoose = require('mongoose');
+const path = require("path");
+
 const categoryRoutes = require("./routes/categoryRoutes");
 
 require('dotenv/config')
@@ -11,10 +13,7 @@ require('dotenv/config')
 app.use(express.json());
 app.use(cors());
 app.use(morgan('tiny'));
-
-app.get('/api/data', (req, res) => {
-  res.json({ message: 'Welcome to my API!' });
-});
+app.use(express.static(path.join(__dirname, 'public')));
 
 mongoose.connect(process.env.Connection_String)
   .then(() => {

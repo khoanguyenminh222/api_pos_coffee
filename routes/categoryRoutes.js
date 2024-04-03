@@ -1,6 +1,21 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
+const path = require("path");
+
 const Category = require("../models/Category");
+
+// Cấu hình multer để lưu file vào thư mục public
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, "../public/images/categories"));
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage: storage });
 
 // Route GET: Lấy danh sách tất cả các categories
 router.get("/", async (req, res) => {
@@ -26,10 +41,10 @@ router.get("/:id", async (req, res) => {
 });
 
 // Route POST: Tạo mới một category
-router.post("/", async (req, res) => {
+router.post("/", upload.single("img"), async (req, res) => {
   const category = new Category({
     name: req.body.name,
-    img: req.body.img
+    img: "/images/" + req.file.filename, // Lưu đường dẫn của hình ảnh trong thư mục public
   });
 
   try {
@@ -41,7 +56,7 @@ router.post("/", async (req, res) => {
 });
 
 // Route PUT: Cập nhật một category
-router.put("/:id", async (req, res) => {
+router.put("/:id", upload.single("img"), async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
     if (category == null) {
@@ -51,8 +66,8 @@ router.put("/:id", async (req, res) => {
     if (req.body.name != null) {
       category.name = req.body.name;
     }
-    if (req.body.img != null) {
-      category.img = req.body.img;
+    if (req.file != null) {
+      category.img = "/images/" + req.file.filename; // Lưu đường dẫn của hình ảnh trong thư mục public
     }
 
     const updatedCategory = await category.save();
