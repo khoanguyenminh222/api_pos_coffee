@@ -16,11 +16,7 @@ app.get('/api/data', (req, res) => {
   res.json({ message: 'Welcome to my API!' });
 });
 
-mongoose.connect(process.env.Connection_String, {
-    dbName: 'pos_coffee_db',
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  })
+mongoose.connect(process.env.Connection_String)
   .then(() => {
     console.log("Database is connecting");
   })
