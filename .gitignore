@@ -1,0 +1,17 @@
+# Node.js
+node_modules/
+
+# Local environment files
+.env
+
+# IDE files
+.vscode/
+.idea/
+
+# Logs
+logs/
+*.log
+
+# Dependency directories
+lib/
+dist/
