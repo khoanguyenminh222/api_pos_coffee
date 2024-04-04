@@ -1,14 +1,37 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
+const fs = require('fs');
 const path = require("path");
+const admin = require("firebase-admin");
+const serviceAccount = require("../shoesstore-fc02b-firebase-adminsdk-sfm26-70e11bd8af.json");
 
 const Category = require("../models/Category");
 
-// Cấu hình multer để lưu file vào thư mục public
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  storageBucket: 'gs://shoesstore-fc02b.appspot.com'
+});
+
+// Đường dẫn đến thư mục tạm
+const tempDir = path.join(__dirname, 'tmp');
+
+// Kiểm tra xem thư mục tạm có tồn tại không
+if (!fs.existsSync(tempDir)) {
+    // Nếu không tồn tại, tạo thư mục
+    fs.mkdirSync(tempDir);
+    console.log('Thư mục tạm đã được tạo.');
+} else {
+    console.log('Thư mục tạm đã tồn tại.');
+}
+
+
+// Cấu hình multer để lưu tệp vào thư mục tạm của Express
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, "../public/images/categories"));
+
+    cb(null, tempDir);
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + path.extname(file.originalname));
@@ -40,14 +63,31 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Route POST: Tạo mới một category
+// Route POST: Tải hình ảnh lên Firebase và tạo mới một category
 router.post("/", upload.single("img"), async (req, res) => {
-  const category = new Category({
-    name: req.body.name,
-    img: "/images/" + req.file.filename, // Lưu đường dẫn của hình ảnh trong thư mục public
-  });
-
   try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    // Tạo đường dẫn lưu trữ trên Firebase
+    const firebaseFilePath = `categories/${Date.now()}${path.extname(file.originalname)}`;
+
+    // Tải tệp lên Firebase Storage
+    await admin.storage().bucket().upload(file.path, {
+      destination: firebaseFilePath
+    });
+
+    // Xóa tệp tạm trên máy chủ Express sau khi tải lên hoàn thành
+    fs.unlinkSync(file.path);
+
+    // Tạo mới category với đường dẫn hình ảnh từ Firebase
+    const category = new Category({
+      name: req.body.name,
+      img: firebaseFilePath
+    });
+
     const newCategory = await category.save();
     res.status(201).json(newCategory);
   } catch (err) {
@@ -55,21 +95,39 @@ router.post("/", upload.single("img"), async (req, res) => {
   }
 });
 
-// Route PUT: Cập nhật một category
+// Route PUT: Cập nhật hình ảnh của một category trên Firebase và trong cơ sở dữ liệu
 router.put("/:id", upload.single("img"), async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
-    if (category == null) {
+    if (!category) {
       return res.status(404).json({ message: "Không tìm thấy category" });
     }
 
-    if (req.body.name != null) {
-      category.name = req.body.name;
-    }
-    if (req.file != null) {
-      category.img = "/images/" + req.file.filename; // Lưu đường dẫn của hình ảnh trong thư mục public
+    // Nếu có tệp được tải lên, tải lên Firebase Storage
+    if (req.file) {
+      const file = req.file;
+
+      // Tạo đường dẫn lưu trữ trên Firebase
+      const firebaseFilePath = `categories/${Date.now()}${path.extname(file.originalname)}`;
+
+      // Tải tệp lên Firebase Storage
+      await admin.storage().bucket().upload(file.path, {
+        destination: firebaseFilePath
+      });
+
+      // Xóa tệp tạm trên máy chủ Express sau khi tải lên hoàn thành
+      fs.unlinkSync(file.path);
+
+      // Cập nhật đường dẫn hình ảnh mới trong cơ sở dữ liệu
+      category.img = firebaseFilePath;
     }
 
+    // Nếu có tên category được cung cấp, cập nhật tên category
+    if (req.body.name) {
+      category.name = req.body.name;
+    }
+
+    // Lưu category đã cập nhật trong cơ sở dữ liệu
     const updatedCategory = await category.save();
     res.json(updatedCategory);
   } catch (err) {
@@ -80,12 +138,11 @@ router.put("/:id", upload.single("img"), async (req, res) => {
 // Route DELETE: Xóa một category
 router.delete("/:id", async (req, res) => {
   try {
-    const category = await Category.findById(req.params.id);
-    if (category == null) {
+    const category = await Category.findOneAndDelete({ _id: req.params.id });
+    if (!category) {
       return res.status(404).json({ message: "Không tìm thấy category" });
     }
 
-    await category.remove();
     res.json({ message: "Đã xóa category" });
   } catch (err) {
     res.status(500).json({ message: err.message });
