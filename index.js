@@ -8,6 +8,7 @@ const admin = require("firebase-admin");
 const serviceAccount = require("./shoesstore-fc02b-firebase-adminsdk-sfm26-70e11bd8af.json");
 
 const categoryRoutes = require("./routes/categoryRoutes");
+const drinkRoutes = require("./routes/drinkRoutes");
 
 require('dotenv/config')
 
@@ -33,6 +34,7 @@ mongoose.connect(process.env.Connection_String)
   })
 
 app.use("/api/categories", categoryRoutes);
+app.use("/api/drink", drinkRoutes);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
