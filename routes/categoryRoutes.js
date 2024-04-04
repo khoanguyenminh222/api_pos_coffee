@@ -2,20 +2,14 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const fs = require('fs');
+const os = require('os');
 const path = require("path");
 const admin = require("firebase-admin");
-//const serviceAccount = require("../shoesstore-fc02b-firebase-adminsdk-sfm26-70e11bd8af.json");
 
 const Category = require("../models/Category");
 
-
-// admin.initializeApp({
-//   credential: admin.credential.cert(serviceAccount),
-//   storageBucket: 'gs://shoesstore-fc02b.appspot.com'
-// });
-
 // Đường dẫn đến thư mục tạm
-const tempDir = path.join(__dirname, 'tmp');
+const tempDir = path.join(os.tmpdir(), 'uploads');
 
 // Kiểm tra xem thư mục tạm có tồn tại không
 if (!fs.existsSync(tempDir)) {
