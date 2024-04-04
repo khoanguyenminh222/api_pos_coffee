@@ -30,15 +30,15 @@ const DrinkSchema = new mongoose.Schema({
   },
   options: {
     temperature: {
-      type: String,
+      type: [String],
       enum: ['hot', 'cold']
     },
     sugar: {
-      type: String,
+      type: [String],
       enum: ['30%', '50%', '70%']
     },
     ice: {
-      type: String,
+      type: [String],
       enum: ['30%', '50%', '70%']
     }
   }
