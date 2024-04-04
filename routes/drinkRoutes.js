@@ -36,6 +36,15 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get("/category/:categoryId", async (req, res) => {
+  try {
+    const drinks = await Drink.find({ categoryId: req.params.categoryId });
+    res.json(drinks);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const drink = await Drink.findById(req.params.id);
