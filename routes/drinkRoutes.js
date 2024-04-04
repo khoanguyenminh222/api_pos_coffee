@@ -6,7 +6,7 @@ const os = require('os');
 const path = require('path');
 const admin = require('firebase-admin');
 
-const Drink = require('../models/drinkSchema');
+const Drink = require('../models/Drink');
 
 const tempDir = path.join(os.tmpdir(), 'uploads');
 if (!fs.existsSync(tempDir)) {
