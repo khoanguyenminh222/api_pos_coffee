@@ -6,10 +6,6 @@ const DrinkSchema = new mongoose.Schema({
     required: true
   },
   prices: {
-    S: {
-      type: Number,
-      required: true
-    },
     M: {
       type: Number,
       required: true
