@@ -67,7 +67,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // Route POST: Tải hình ảnh lên Firebase và tạo mới một đồ uống
-router.post("/", upload.single("img"), async (req, res) => {
+router.post("/", upload.single("image"), async (req, res) => {
   try {
     const file = req.file;
     if (!file) {
@@ -102,7 +102,7 @@ router.post("/", upload.single("img"), async (req, res) => {
 });
 
 // Route PUT: Cập nhật hình ảnh của một đồ uống trên Firebase và trong cơ sở dữ liệu
-router.put("/:id", upload.single("img"), async (req, res) => {
+router.put("/:id", upload.single("image"), async (req, res) => {
   try {
     const drink = await Drink.findById(req.params.id);
     if (!drink) {
