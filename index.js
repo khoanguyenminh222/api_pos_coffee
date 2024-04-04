@@ -17,10 +17,13 @@ app.use(cors());
 app.use(morgan('tiny'));
 app.use(express.static(path.join(__dirname, 'public')));
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  storageBucket: process.env.Storage_Bucket
-});
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    storageBucket: process.env.Storage_Bucket
+  });
+}
+
 
 mongoose.connect(process.env.Connection_String)
   .then(() => {
