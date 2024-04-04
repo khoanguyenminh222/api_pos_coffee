@@ -4,15 +4,15 @@ const multer = require("multer");
 const fs = require('fs');
 const path = require("path");
 const admin = require("firebase-admin");
-const serviceAccount = require("../shoesstore-fc02b-firebase-adminsdk-sfm26-70e11bd8af.json");
+//const serviceAccount = require("../shoesstore-fc02b-firebase-adminsdk-sfm26-70e11bd8af.json");
 
 const Category = require("../models/Category");
 
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  storageBucket: 'gs://shoesstore-fc02b.appspot.com'
-});
+// admin.initializeApp({
+//   credential: admin.credential.cert(serviceAccount),
+//   storageBucket: 'gs://shoesstore-fc02b.appspot.com'
+// });
 
 // Đường dẫn đến thư mục tạm
 const tempDir = path.join(__dirname, 'tmp');

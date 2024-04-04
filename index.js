@@ -4,6 +4,8 @@ const app = express();
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const path = require("path");
+const admin = require("firebase-admin");
+const serviceAccount = require("./shoesstore-fc02b-firebase-adminsdk-sfm26-70e11bd8af.json");
 
 const categoryRoutes = require("./routes/categoryRoutes");
 
@@ -14,6 +16,11 @@ app.use(express.json());
 app.use(cors());
 app.use(morgan('tiny'));
 app.use(express.static(path.join(__dirname, 'public')));
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  storageBucket: process.env.Storage_Bucket
+});
 
 mongoose.connect(process.env.Connection_String)
   .then(() => {
