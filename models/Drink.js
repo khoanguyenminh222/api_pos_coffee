@@ -5,9 +5,19 @@ const DrinkSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  price: {
-    type: Number,
-    required: true
+  prices: {
+    S: {
+      type: Number,
+      required: true
+    },
+    M: {
+      type: Number,
+      required: true
+    },
+    L: {
+      type: Number,
+      required: true
+    }
   },
   image: {
     type: String,
@@ -15,17 +25,13 @@ const DrinkSchema = new mongoose.Schema({
   },
   categoryId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Category', // Tham chiếu tới mô hình Category
+    ref: 'Category',
     required: true
   },
   options: {
     temperature: {
       type: String,
       enum: ['hot', 'cold']
-    },
-    size: {
-      type: String,
-      enum: ['S', 'M', 'L']
     },
     sugar: {
       type: String,
@@ -36,6 +42,8 @@ const DrinkSchema = new mongoose.Schema({
       enum: ['30%', '50%', '70%']
     }
   }
-});
+},
+{ timestamps: true }
+);
 
 module.exports = mongoose.model('Drink', DrinkSchema);
