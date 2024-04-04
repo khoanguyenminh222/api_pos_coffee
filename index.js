@@ -34,7 +34,7 @@ mongoose.connect(process.env.Connection_String)
   })
 
 app.use("/api/categories", categoryRoutes);
-app.use("/api/drink", drinkRoutes);
+app.use("/api/drinks", drinkRoutes);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
