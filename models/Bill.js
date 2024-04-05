@@ -5,8 +5,8 @@ const BillSchema = new mongoose.Schema({
         ref: 'User', // Tham chiếu đến schema của người dùng
         required: true
     },
-    items: [{
-        drinkId: {
+    drinks: [{
+        id: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Drink', // Tham chiếu đến schema của các đồ uống
             required: true
