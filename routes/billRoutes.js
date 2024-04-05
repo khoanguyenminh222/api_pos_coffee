@@ -68,4 +68,17 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Route để lấy các hóa đơn của một người dùng
+router.get('/user/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        // Truy vấn các hóa đơn của người dùng dựa trên userId
+        const userBills = await Bill.find({ userId: userId });
+        res.json(userBills);
+    } catch (error) {
+        console.error('Lỗi khi lấy các hóa đơn của người dùng:', error);
+        res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
+    }
+});
+
 module.exports = router;
