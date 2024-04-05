@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const bodyParser = require('body-parser');
 const app = express();
 const morgan = require('morgan');
 const mongoose = require('mongoose');
@@ -9,6 +10,7 @@ const serviceAccount = require("./shoesstore-fc02b-firebase-adminsdk-sfm26-70e11
 
 const categoryRoutes = require("./routes/categoryRoutes");
 const drinkRoutes = require("./routes/drinkRoutes");
+const userRoutes = require("./routes/userRoutes");
 
 require('dotenv/config')
 
@@ -16,6 +18,8 @@ require('dotenv/config')
 app.use(express.json());
 app.use(cors());
 app.use(morgan('tiny'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -35,6 +39,7 @@ mongoose.connect(process.env.Connection_String)
 
 app.use("/api/categories", categoryRoutes);
 app.use("/api/drinks", drinkRoutes);
+app.use("/api/users", userRoutes);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
