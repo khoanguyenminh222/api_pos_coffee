@@ -11,6 +11,10 @@ const BillSchema = new mongoose.Schema({
             ref: 'Drink', // Tham chiếu đến schema của các đồ uống
             required: true
         },
+        name:{
+            type: String,
+            required: true
+        },
         quantity: {
             type: Number,
             required: true
