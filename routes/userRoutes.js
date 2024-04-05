@@ -59,4 +59,57 @@ router.post('/login', async (req, res) => {
     }
 });
 
+router.get('/:username', async (req, res) => {
+    try {
+        const username = req.params.username;
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.status(404).json({ message: 'Người dùng không tồn tại' });
+        }
+        res.status(200).json(user);
+    } catch (error) {
+        console.error('Lỗi khi lấy người dùng:', error);
+        res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
+    }
+});
+
+router.get('/', async (req, res) => {
+    try {
+        const users = await User.find();
+        res.status(200).json(users);
+    } catch (error) {
+        console.error('Lỗi khi lấy tất cả người dùng:', error);
+        res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
+    }
+});
+
+router.put('/:id', async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const updatedUserData = req.body;
+        const updatedUser = await User.findByIdAndUpdate(userId, updatedUserData, { new: true });
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'Người dùng không tồn tại' });
+        }
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        console.error('Lỗi khi cập nhật người dùng:', error);
+        res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
+    }
+});
+
+router.delete('/:id', async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const deletedUser = await User.findByIdAndDelete(userId);
+        if (!deletedUser) {
+            return res.status(404).json({ message: 'Người dùng không tồn tại' });
+        }
+        res.status(200).json({ message: 'Người dùng đã được xóa thành công' });
+    } catch (error) {
+        console.error('Lỗi khi xóa người dùng:', error);
+        res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
+    }
+});
+
 module.exports = router;

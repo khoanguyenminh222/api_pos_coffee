@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 const app = express();
 const morgan = require('morgan');
 const mongoose = require('mongoose');
@@ -18,8 +17,6 @@ require('dotenv/config')
 app.use(express.json());
 app.use(cors());
 app.use(morgan('tiny'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 
 if (!admin.apps.length) {
   admin.initializeApp({
