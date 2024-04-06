@@ -123,7 +123,7 @@ router.put("/:id", upload.single("img"), async (req, res) => {
 
     // Lưu category đã cập nhật trong cơ sở dữ liệu
     const updatedCategory = await category.save();
-    res.json(updatedCategory);
+    res.status(201).json(updatedCategory);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -137,7 +137,7 @@ router.delete("/:id", async (req, res) => {
       return res.status(404).json({ message: "Không tìm thấy category" });
     }
 
-    res.json({ message: "Đã xóa category" });
+    res.status(201).json({ message: "Đã xóa category" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
