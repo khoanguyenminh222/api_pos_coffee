@@ -14,9 +14,15 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    dateOfBirth: { type: Date},
+    gender: { type: String, enum: ['Male', 'Female', 'Other']},
+    address: { type: String},
+    phoneNumber: { type: String},
+    email: { type: String},
+    shift: { type: String },
     role: {
         type: String,
-        enum: ['admin', 'user'], // Phân quyền cho người dùng
+        enum: ['admin', 'manager', 'user'], // Phân quyền cho người dùng
         default: 'user' // Mặc định là 'user' nếu không được chỉ định
     }
 },
