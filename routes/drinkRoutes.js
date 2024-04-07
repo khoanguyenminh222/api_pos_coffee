@@ -112,7 +112,7 @@ router.put('/:id', upload.single('image'), async (req, res) => {
     if (options) drink.options = options;
 
     const updatedDrink = await drink.save();
-    res.json(updatedDrink);
+    res.status(201).json(updatedDrink);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -124,7 +124,7 @@ router.delete('/:id', async (req, res) => {
     if (!drink) {
       return res.status(404).json({ message: 'Drink not found' });
     }
-    res.json({ message: 'Drink deleted' });
+    res.status(201).json({ message: 'Drink deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
