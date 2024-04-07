@@ -3,12 +3,10 @@ const mongoose = require('mongoose');
 const UserSchema = new mongoose.Schema({
     username: {
         type: String,
-        required: true,
         unique: true // Đảm bảo không có hai tài khoản có cùng tên đăng nhập
     },
     password: {
         type: String,
-        required: true
     },
     fullname: {
         type: String,
@@ -19,7 +17,6 @@ const UserSchema = new mongoose.Schema({
     address: { type: String},
     phoneNumber: { type: String},
     email: { type: String},
-    shift: { type: String },
     role: {
         type: String,
         enum: ['admin', 'manager', 'user'], // Phân quyền cho người dùng

@@ -5,26 +5,32 @@ const bcrypt = require('bcrypt');
 const User = require('../models/User');
 
 // Route để tạo người dùng mới
+// Route để tạo người dùng mới
 router.post('/register', async (req, res) => {
     try {
-        const { username, password, fullname, role } = req.body;
-        
+        // Nhận thông tin từ yêu cầu
+        const { username, password, fullname, role, dateOfBirth, gender, address, phoneNumber, email } = req.body;
+
         // Kiểm tra xem người dùng đã tồn tại trong cơ sở dữ liệu chưa
         const existingUser = await User.findOne({ username });
         if (existingUser) {
             return res.status(400).json({ message: 'Người dùng đã tồn tại' });
         }
 
-        // Kiểm tra xem mật khẩu có tồn tại hay không
-        if (!password) {
-            return res.status(400).json({ message: 'Vui lòng nhập mật khẩu' });
-        }
+        // Khởi tạo một người dùng mới với các thông tin được truyền vào
+        const newUser = new User({ 
+            username, 
+            password: password ? await bcrypt.hash(password, 10) : undefined, // Mã hóa mật khẩu nếu được cung cấp
+            fullname, 
+            role,
+            dateOfBirth,
+            gender,
+            address,
+            phoneNumber,
+            email
+        });
 
-        // Mã hóa mật khẩu trước khi lưu vào cơ sở dữ liệu
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Tạo người dùng mới
-        const newUser = new User({ username, password: hashedPassword, fullname, role });
+        // Lưu người dùng mới vào cơ sở dữ liệu
         await newUser.save();
 
         res.status(201).json({ message: 'Người dùng đã được tạo thành công' });
@@ -33,6 +39,7 @@ router.post('/register', async (req, res) => {
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
     }
 });
+
 
 // Route để đăng nhập
 router.post('/login', async (req, res) => {
@@ -52,7 +59,7 @@ router.post('/login', async (req, res) => {
         }
 
         // Đăng nhập thành công
-        res.status(200).json({ message: 'Đăng nhập thành công' });
+        res.status(201).json({ message: 'Đăng nhập thành công' });
     } catch (error) {
         console.error('Lỗi khi đăng nhập:', error);
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
@@ -91,7 +98,7 @@ router.put('/:id', async (req, res) => {
         if (!updatedUser) {
             return res.status(404).json({ message: 'Người dùng không tồn tại' });
         }
-        res.status(200).json(updatedUser);
+        res.status(201).json(updatedUser);
     } catch (error) {
         console.error('Lỗi khi cập nhật người dùng:', error);
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
@@ -105,7 +112,7 @@ router.delete('/:id', async (req, res) => {
         if (!deletedUser) {
             return res.status(404).json({ message: 'Người dùng không tồn tại' });
         }
-        res.status(200).json({ message: 'Người dùng đã được xóa thành công' });
+        res.status(201).json({ message: 'Người dùng đã được xóa thành công' });
     } catch (error) {
         console.error('Lỗi khi xóa người dùng:', error);
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
