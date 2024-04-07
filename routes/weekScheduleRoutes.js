@@ -17,6 +17,16 @@ router.get('/:userId', async (req, res) => {
     }
 });
 
+router.get('/', async (req, res) => {
+    try {
+        const weekSchedules = await WeekSchedule.find();
+        res.status(200).json(weekSchedules);
+    } catch (error) {
+        console.error('Error fetching week schedules:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
 // Tạo lịch làm việc cho một tuần của một nhân viên
 router.post('/', async (req, res) => {
     try {
