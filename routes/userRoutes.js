@@ -101,8 +101,17 @@ router.get('/:username', async (req, res) => {
 
 router.get('/', async (req, res) => {
     try {
-        const users = await User.find();
-        res.status(200).json(users);
+        const page = parseInt(req.query.page) || 1; // Trang mặc định là 1 nếu không có tham số page
+        const pageSize = parseInt(req.query.pageSize) || 10; // Số lượng mục trên mỗi trang mặc định là 10 nếu không có tham số pageSize
+
+        const totalUsers = await User.countDocuments();
+        const totalPages = Math.ceil(totalUsers / pageSize); // Tính tổng số trang
+
+        const users = await User.find()
+            .skip((page - 1) * pageSize) // Bỏ qua các mục ở trang trước
+            .limit(pageSize); // Giới hạn số lượng mục trên trang
+
+        res.status(200).json({ users, totalPages });
     } catch (error) {
         console.error('Lỗi khi lấy tất cả người dùng:', error);
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
