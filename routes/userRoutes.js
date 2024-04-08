@@ -4,7 +4,15 @@ const bcrypt = require('bcrypt');
 
 const User = require('../models/User');
 
-// Route để tạo người dùng mới
+// Hàm để tạo username mặc định từ fullname và phoneNumber
+function generateUsername(fullname, phoneNumber) {
+    // Xóa bỏ dấu cách trong fullname và chuyển thành chữ thường
+    const cleanedFullname = fullname.replace(/\s+/g, '').toLowerCase();
+    // Loại bỏ các ký tự không phải chữ hoặc số trong phoneNumber
+    const cleanedPhoneNumber = phoneNumber.replace(/\D/g, '');
+    // Kết hợp fullname và phoneNumber để tạo username mặc định
+    return `${cleanedFullname}${cleanedPhoneNumber}`;
+}
 // Route để tạo người dùng mới
 router.post('/register', async (req, res) => {
     try {
@@ -21,7 +29,7 @@ router.post('/register', async (req, res) => {
         if (!username) {
             username = generateUsername(fullname, phoneNumber);
         }
-        
+
         // Khởi tạo một người dùng mới với các thông tin được truyền vào
         const newUser = new User({ 
             username, 
