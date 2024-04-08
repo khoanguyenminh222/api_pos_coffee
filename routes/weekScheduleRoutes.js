@@ -4,16 +4,32 @@ const WeekSchedule = require('../models/WeekSchedule');
 
 // Lấy thông tin lịch làm việc của một nhân viên
 router.get('/:userId', async (req, res) => {
+    const userId = req.params.userId;
     try {
-        const { userId } = req.params;
-        const weekSchedule = await WeekSchedule.findOne({ user: userId });
-        if (!weekSchedule) {
-            return res.status(404).json({ message: 'Không tìm thấy lịch làm việc cho nhân viên này' });
+        // Lấy ngày bắt đầu và kết thúc của tuần từ query parameters
+        const { startDate, endDate } = req.query;
+
+        // Kiểm tra xem các query parameters đã được cung cấp hay không
+        if (!startDate || !endDate) {
+            return res.status(400).json({ message: 'Missing startDate or endDate parameters' });
         }
-        return res.status(200).json(weekSchedule);
+
+        // Truy vấn lịch làm việc của người dùng dựa trên userId và khoảng thời gian
+        const schedule = await WeekSchedule.findOne({
+            user: userId,
+            'weeks.startDate': { $gte: new Date(startDate) },
+            'weeks.endDate': { $lte: new Date(endDate) }
+        });
+
+        if (!schedule) {
+            return res.status(404).json({ message: 'Không tìm thấy lịch làm việc cho người dùng trong khoảng thời gian đã cho.' });
+        }
+
+        // Trả về kết quả
+        res.json(schedule);
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Đã xảy ra lỗi khi lấy thông tin lịch làm việc của nhân viên' });
+        console.error('Error finding schedule for the user:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
 
