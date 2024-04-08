@@ -103,11 +103,15 @@ router.get('/', async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1; // Trang mặc định là 1 nếu không có tham số page
         const pageSize = parseInt(req.query.pageSize) || 10; // Số lượng mục trên mỗi trang mặc định là 10 nếu không có tham số pageSize
+        const searchTerm = req.query.searchTerm || ''; // Từ khóa tìm kiếm mặc định là chuỗi trống nếu không có tham số searchTerm
 
-        const totalUsers = await User.countDocuments();
+        // Xây dựng điều kiện tìm kiếm
+        const searchCondition = searchTerm ? { fullname: { $regex: searchTerm, $options: 'i' } } : {};
+
+        const totalUsers = await User.countDocuments(searchCondition);
         const totalPages = Math.ceil(totalUsers / pageSize); // Tính tổng số trang
 
-        const users = await User.find()
+        const users = await User.find(searchCondition)
             .skip((page - 1) * pageSize) // Bỏ qua các mục ở trang trước
             .limit(pageSize); // Giới hạn số lượng mục trên trang
 
