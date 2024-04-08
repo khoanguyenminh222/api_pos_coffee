@@ -44,6 +44,17 @@ router.get('/', async (req, res) => {
 // Tạo lịch làm việc cho một tuần của một nhân viên
 router.post('/', async (req, res) => {
     try {
+        // Lấy ngày bắt đầu và kết thúc của tuần từ body request
+        const { weeks } = req.body;
+
+        // Kiểm tra xem ngày bắt đầu và kết thúc có trùng nhau không
+        const startDates = weeks.map(week => new Date(week.startDate));
+        const endDates = weeks.map(week => new Date(week.endDate));
+        if (startDates.some((date, index) => date.getTime() === endDates[index].getTime())) {
+            return res.status(400).json({ message: 'Ngày bắt đầu và kết thúc của tuần không được trùng nhau' });
+        }
+
+        // Nếu không có sự trùng lặp, tiếp tục tạo lịch mới
         const newWeekSchedule = await WeekSchedule.create(req.body);
         return res.status(201).json(newWeekSchedule);
     } catch (error) {
