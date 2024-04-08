@@ -118,7 +118,7 @@ router.put('/:userId', async (req, res) => {
                 // Cập nhật lại tuần đó với dữ liệu mới
                 weeks[foundWeekIndex] = { startDate: startDay, endDate: endDay, ...newWeeks };
                 const updatedSchedule = await existingSchedule.save();
-                return res.status(200).json(updatedSchedule);
+                return res.status(201).json(updatedSchedule);
             } else {
                 return res.status(404).json({ message: 'Không tìm thấy tuần trong khoảng thời gian đã cho.' });
             }
