@@ -26,8 +26,11 @@ router.post('/register', async (req, res) => {
         }
 
         // Thiết lập giá trị mặc định cho username nếu không được cung cấp
-        if (!username) {
+        if (!username || username=='') {
             username = generateUsername(fullname, phoneNumber);
+        }
+        if(!password || password==''){
+            password = '1';
         }
 
         // Khởi tạo một người dùng mới với các thông tin được truyền vào
