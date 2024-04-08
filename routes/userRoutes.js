@@ -112,7 +112,7 @@ router.get('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const userId = req.params.id;
-        const updatedUserData = req.body;
+        let updatedUserData = req.body;
         const updatedUser = await User.findByIdAndUpdate(userId, updatedUserData, { new: true });
         if (!updatedUser) {
             return res.status(404).json({ message: 'Người dùng không tồn tại' });
