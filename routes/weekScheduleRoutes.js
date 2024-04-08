@@ -19,10 +19,24 @@ router.get('/:userId', async (req, res) => {
 
 router.get('/', async (req, res) => {
     try {
-        const weekSchedules = await WeekSchedule.find();
-        res.status(200).json(weekSchedules);
+        // Lấy ngày bắt đầu và kết thúc của tuần từ query parameters
+        const { startDate, endDate } = req.query;
+
+        // Kiểm tra xem các query parameters đã được cung cấp hay không
+        if (!startDate || !endDate) {
+            return res.status(400).json({ message: 'Missing startDate or endDate parameters' });
+        }
+
+        // Truy vấn các bản ghi trong bảng WeekSchedule
+        const schedules = await WeekSchedule.find({
+            'weeks.startDate': { $gte: new Date(startDate) },
+            'weeks.endDate': { $lte: new Date(endDate) }
+        }).populate('user'); // Sử dụng populate để lấy thông tin của user đồng thời
+
+        // Trả về kết quả
+        res.json(schedules);
     } catch (error) {
-        console.error('Error fetching week schedules:', error);
+        console.error('Error finding schedules for the week:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
