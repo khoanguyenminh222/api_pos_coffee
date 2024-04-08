@@ -45,7 +45,7 @@ router.post('/register', async (req, res) => {
             phoneNumber,
             email
         });
-
+        console.log(newUser)
         // Lưu người dùng mới vào cơ sở dữ liệu
         await newUser.save();
 
