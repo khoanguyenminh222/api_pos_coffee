@@ -141,18 +141,39 @@ router.put('/:userId', async (req, res) => {
     }
 });
 
-// Xóa lịch làm việc của một nhân viên
+// Xóa lịch làm việc của một người dùng trong một khoảng thời gian
 router.delete('/:userId', async (req, res) => {
+    const userId = req.params.userId;
     try {
-        const { userId } = req.params;
-        const deletedWeekSchedule = await WeekSchedule.findOneAndDelete({ user: userId });
-        if (!deletedWeekSchedule) {
-            return res.status(404).json({ message: 'Không tìm thấy lịch làm việc cho nhân viên này' });
+        // Lấy ngày bắt đầu và kết thúc của khoảng thời gian từ query parameters
+        const { startDate, endDate } = req.query;
+
+        // Kiểm tra xem các query parameters đã được cung cấp hay không
+        if (!startDate || !endDate) {
+            return res.status(400).json({ message: 'Missing startDate or endDate parameters' });
         }
-        return res.status(201).json({ message: 'Lịch làm việc của nhân viên đã được xóa' });
+
+        // Xóa lịch làm việc của người dùng dựa trên userId và khoảng thời gian
+        const result = await WeekSchedule.findOneAndUpdate(
+            {
+                user: userId,
+                $and: [
+                    { 'weeks.startDate': { $lte: new Date(endDate) } },
+                    { 'weeks.endDate': { $gte: new Date(startDate) } }
+                ]
+            },
+            { $pull: { weeks: { startDate: { $gte: new Date(startDate) }, endDate: { $lte: new Date(endDate) } } } },
+            { new: true }
+        );
+
+        if (!result) {
+            return res.status(404).json({ message: 'Không tìm thấy lịch làm việc để xóa cho người dùng trong khoảng thời gian đã cho.' });
+        }
+
+        res.json({ message: 'Xóa lịch làm việc thành công' });
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Đã xảy ra lỗi khi xóa lịch làm việc của nhân viên' });
+        console.error('Lỗi khi xóa lịch làm việc của người dùng:', error);
+        res.status(500).json({ message: 'Lỗi máy chủ nội bộ' });
     }
 });
 
