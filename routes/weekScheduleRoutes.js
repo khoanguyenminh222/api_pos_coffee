@@ -81,16 +81,37 @@ router.post('/', async (req, res) => {
 
 // Cập nhật lịch làm việc của một nhân viên
 router.put('/:userId', async (req, res) => {
+    const userId = req.params.userId;
+    const { startDay, endDay, newWeeks } = req.body;
+
     try {
-        const { userId } = req.params;
-        const updatedWeekSchedule = await WeekSchedule.findOneAndUpdate({ user: userId }, req.body, { new: true });
-        if (!updatedWeekSchedule) {
-            return res.status(404).json({ message: 'Không tìm thấy lịch làm việc cho nhân viên này' });
+        // Tìm lịch làm việc của người dùng
+        const existingSchedule = await WeekSchedule.findOne({ user: userId });
+
+        if (existingSchedule) {
+            // Nếu người dùng đã có lịch làm việc
+            const { weeks } = existingSchedule;
+
+            // Kiểm tra xem lịch làm việc của người dùng có tuần nào trong khoảng start day và end day không
+            const foundWeekIndex = weeks.findIndex(week => {
+                return new Date(week.startDate) <= new Date(startDay) && new Date(week.endDate) >= new Date(endDay);
+            });
+
+            if (foundWeekIndex !== -1) {
+                // Nếu tìm thấy tuần trong khoảng start day và end day
+                // Cập nhật lại tuần đó với dữ liệu mới
+                weeks[foundWeekIndex] = { startDate: startDay, endDate: endDay, ...newWeeks };
+                const updatedSchedule = await existingSchedule.save();
+                return res.status(200).json(updatedSchedule);
+            } else {
+                return res.status(404).json({ message: 'Không tìm thấy tuần trong khoảng thời gian đã cho.' });
+            }
+        } else {
+            return res.status(404).json({ message: 'Người dùng không có lịch làm việc.' });
         }
-        return res.status(201).json(updatedWeekSchedule);
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ message: 'Đã xảy ra lỗi khi cập nhật lịch làm việc của nhân viên' });
+        return res.status(500).json({ message: 'Đã xảy ra lỗi khi cập nhật lịch làm việc.' });
     }
 });
 
