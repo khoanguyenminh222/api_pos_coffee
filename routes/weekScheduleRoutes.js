@@ -43,20 +43,36 @@ router.get('/', async (req, res) => {
 
 // Tạo lịch làm việc cho một tuần của một nhân viên
 router.post('/', async (req, res) => {
+    const { userId, weeks } = req.body;
+
     try {
-        // Lấy ngày bắt đầu và kết thúc của tuần từ body request
-        const { weeks } = req.body;
+        // Kiểm tra xem người dùng đã có lịch làm việc hay chưa
+        const existingSchedule = await WeekSchedule.findOne({ user: userId });
 
-        // Kiểm tra xem ngày bắt đầu và kết thúc có trùng nhau không
-        const startDates = weeks.map(week => new Date(week.startDate));
-        const endDates = weeks.map(week => new Date(week.endDate));
-        if (startDates.some((date, index) => date.getTime() === endDates[index].getTime())) {
-            return res.status(400).json({ message: 'Ngày bắt đầu và kết thúc của tuần không được trùng nhau' });
+        if (existingSchedule) {
+            // Nếu người dùng đã có lịch làm việc
+            const { startDate, endDate } = weeks[0]; // Lấy start date và end date của tuần mới
+            const { weeks: existingWeeks } = existingSchedule;
+
+            // Kiểm tra xem tuần mới có nằm ngoài vùng start date và end date của các tuần hiện có hay không
+            const isOutsideRange = existingWeeks.every(week => {
+                return (new Date(startDate) < new Date(week.startDate) && new Date(endDate) < new Date(week.startDate)) ||
+                       (new Date(startDate) > new Date(week.endDate) && new Date(endDate) > new Date(week.endDate));
+            });
+
+            if (isOutsideRange) {
+                // Nếu tuần mới nằm ngoài vùng start date và end date của các tuần hiện có
+                existingSchedule.weeks.push(...weeks);
+                const updatedSchedule = await existingSchedule.save();
+                return res.status(201).json(updatedSchedule);
+            } else {
+                return res.status(400).json({ message: 'Tuần mới phải nằm ngoài vùng của các tuần hiện có.' });
+            }
+        } else {
+            // Nếu người dùng chưa có lịch làm việc
+            const newWeekSchedule = await WeekSchedule.create({ user: userId, weeks });
+            return res.status(201).json(newWeekSchedule);
         }
-
-        // Nếu không có sự trùng lặp, tiếp tục tạo lịch mới
-        const newWeekSchedule = await WeekSchedule.create(req.body);
-        return res.status(201).json(newWeekSchedule);
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: 'Đã xảy ra lỗi khi tạo lịch làm việc' });
