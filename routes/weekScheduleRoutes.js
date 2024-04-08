@@ -17,13 +17,23 @@ router.get('/:userId', async (req, res) => {
         // Truy vấn lịch làm việc của người dùng dựa trên userId và khoảng thời gian
         const schedule = await WeekSchedule.findOne({
             user: userId,
-            'weeks.startDate': { $gte: new Date(startDate) },
-            'weeks.endDate': { $lte: new Date(endDate) }
+            $and: [
+                { 'weeks.startDate': { $lte: new Date(endDate) } },
+                { 'weeks.endDate': { $gte: new Date(startDate) } }
+            ]
         });
 
         if (!schedule) {
             return res.status(404).json({ message: 'Không tìm thấy lịch làm việc cho người dùng trong khoảng thời gian đã cho.' });
         }
+
+        // Lọc các tuần trong khoảng thời gian đã chỉ định
+        const filteredWeeks = schedule.weeks.filter(week =>
+            new Date(week.startDate) <= new Date(endDate) && new Date(week.endDate) >= new Date(startDate)
+        );
+
+        // Cập nhật schedule với các tuần đã lọc
+        schedule.weeks = filteredWeeks;
 
         // Trả về kết quả
         res.json(schedule);
