@@ -17,6 +17,11 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ message: 'Người dùng đã tồn tại' });
         }
 
+        // Thiết lập giá trị mặc định cho username nếu không được cung cấp
+        if (!username) {
+            username = generateUsername(fullname, phoneNumber);
+        }
+        
         // Khởi tạo một người dùng mới với các thông tin được truyền vào
         const newUser = new User({ 
             username, 
