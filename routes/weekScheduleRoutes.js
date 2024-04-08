@@ -170,7 +170,7 @@ router.delete('/:userId', async (req, res) => {
             return res.status(404).json({ message: 'Không tìm thấy lịch làm việc để xóa cho người dùng trong khoảng thời gian đã cho.' });
         }
 
-        res.json({ message: 'Xóa lịch làm việc thành công' });
+        res.status(201).json({ message: 'Xóa lịch làm việc thành công' });
     } catch (error) {
         console.error('Lỗi khi xóa lịch làm việc của người dùng:', error);
         res.status(500).json({ message: 'Lỗi máy chủ nội bộ' });
