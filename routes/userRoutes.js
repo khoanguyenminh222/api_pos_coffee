@@ -4,10 +4,14 @@ const bcrypt = require('bcrypt');
 
 const User = require('../models/User');
 
+
+function removeVietnameseAccent(str) {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
 // Hàm để tạo username mặc định từ fullname và phoneNumber
 function generateUsername(fullname, phoneNumber) {
-    // Xóa bỏ dấu cách trong fullname và chuyển thành chữ thường
-    const cleanedFullname = fullname.replace(/\s+/g, '').toLowerCase();
+    // Loại bỏ các dấu tiếng Việt trong fullname và chuyển thành chữ thường
+    const cleanedFullname = removeVietnameseAccent(fullname).replace(/\s/g, '').toLowerCase();
     // Loại bỏ các ký tự không phải chữ hoặc số trong phoneNumber
     const cleanedPhoneNumber = phoneNumber.replace(/\D/g, '');
     // Kết hợp fullname và phoneNumber để tạo username mặc định
@@ -17,7 +21,7 @@ function generateUsername(fullname, phoneNumber) {
 router.post('/register', async (req, res) => {
     try {
         // Nhận thông tin từ yêu cầu
-        const { username, password, fullname, role, dateOfBirth, gender, address, phoneNumber, email } = req.body;
+        let { username, password, fullname, role, dateOfBirth, gender, address, phoneNumber, email } = req.body;
 
         // Kiểm tra xem người dùng đã tồn tại trong cơ sở dữ liệu chưa
         const existingUser = await User.findOne({ username });
@@ -26,10 +30,10 @@ router.post('/register', async (req, res) => {
         }
 
         // Thiết lập giá trị mặc định cho username nếu không được cung cấp
-        if (!username || username==='') {
+        if (!username || username === '') {
             username = generateUsername(fullname, phoneNumber);
         }
-        if(!password || password===''){
+        if(!password || password==''){
             password = '1';
         }
 
@@ -45,7 +49,6 @@ router.post('/register', async (req, res) => {
             phoneNumber,
             email
         });
-        console.log(newUser)
         // Lưu người dùng mới vào cơ sở dữ liệu
         await newUser.save();
 
