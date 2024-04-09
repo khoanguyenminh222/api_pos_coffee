@@ -27,9 +27,9 @@ function getYear(date) {
 }
 
 // đếm số lượng bán ra
-router.post('/items-sold/:period', async (req, res) => {
+router.get('/items-sold/:period', async (req, res) => {
     const period = req.params.period;
-    const dateFromBody = req.body.date ? new Date(req.body.date) : new Date();
+    const dateFromBody = req.query.date ? new Date(req.query.date) : new Date();
     let dateQuery = {};
 
     switch (period) {
@@ -104,12 +104,12 @@ function getAllMonthsOfYear(date) {
     return months;
 }
 // doanh thu theo ngày tháng năm
-router.post('/revenue/:period', async (req, res) => {
+router.get('/revenue/:period', async (req, res) => {
     const period = req.params.period;
     let dateQuery = {};
 
     // Kiểm tra xem ngày có được cung cấp trong phần thân của yêu cầu không
-    const dateFromBody = req.body.date ? new Date(req.body.date) : new Date(); // Sử dụng ngày hiện tại nếu không có ngày được cung cấp
+    const dateFromBody = req.query.date ? new Date(req.query.date) : new Date(); // Sử dụng ngày hiện tại nếu không có ngày được cung cấp
 
     try {
         let revenueByPeriod;
@@ -148,12 +148,12 @@ router.post('/revenue/:period', async (req, res) => {
 });
 
 // mặt hàng phổ biến
-router.post('/popular-items/:period', async (req, res) => {
+router.get('/popular-items/:period', async (req, res) => {
     const period = req.params.period;
     let dateQuery = {};
 
     // Kiểm tra xem ngày có được cung cấp trong phần thân của yêu cầu không
-    const dateFromBody = req.body.date ? new Date(req.body.date) : new Date();
+    const dateFromBody = req.query.date ? new Date(req.query.date) : new Date();
 
     switch (period) {
         case "day":
