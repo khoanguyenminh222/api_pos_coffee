@@ -146,7 +146,6 @@ router.post('/popular-items/:period', async (req, res) => {
             dateQuery = { $gte: dateFromBody, $lte: dateFromBody };
             break;
         case "week":
-            // Nếu có ngày từ phần thân của yêu cầu, sử dụng nó, nếu không, sử dụng ngày hiện tại
             const weekToQuery = getWeek(dateFromBody);
             dateQuery = { $gte: weekToQuery.start, $lte: weekToQuery.end };
             break;
@@ -159,15 +158,27 @@ router.post('/popular-items/:period', async (req, res) => {
             dateQuery = { $gte: yearToQuery.start, $lte: yearToQuery.end };
             break;
         case "all":
-            dateQuery = {};
-            break;
+            // Trả về tất cả các mặt hàng phổ biến mà không phụ thuộc vào ngày
+            try {
+                const allPopularItems = await Bill.aggregate([
+                    { $unwind: "$drinks" },
+                    { $group: { _id: "$drinks.name", totalQuantity: { $sum: "$drinks.quantity" } } },
+                    { $sort: { totalQuantity: -1 } }
+                ]);
+                res.json(allPopularItems);
+                return; // Dừng việc thực thi tiếp tục của hàm sau khi đã gửi phản hồi
+            } catch (err) {
+                res.status(500).json({ message: err.message });
+                return; // Dừng việc thực thi tiếp tục của hàm nếu có lỗi
+            }
         default:
             return res.status(400).json({ message: "Invalid period" });
     }
 
+    // Thực hiện truy vấn theo khoảng thời gian nhất định
     try {
         const popularItems = await Bill.aggregate([
-            { $match: { "drinks.createdAt": dateQuery } },
+            { $match: { "drinks.createdAt": dateQuery } }, // Lọc theo ngày/tuần/tháng/năm
             { $unwind: "$drinks" },
             { $group: { _id: "$drinks.name", totalQuantity: { $sum: "$drinks.quantity" } } },
             { $sort: { totalQuantity: -1 } }
