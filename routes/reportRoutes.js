@@ -34,7 +34,9 @@ router.post('/items-sold/:period', async (req, res) => {
 
     switch (period) {
         case "day":
-            dateQuery = { $gte: dateFromBody, $lte: dateFromBody };
+            const startOfDay = new Date(dateFromBody.getFullYear(), dateFromBody.getMonth(), dateFromBody.getDate(), 0, 0, 0);
+            const endOfDay = new Date(dateFromBody.getFullYear(), dateFromBody.getMonth(), dateFromBody.getDate(), 23, 59, 59);
+            dateQuery = { $gte: startOfDay, $lte: endOfDay };
             break;
         case "week":
             const weekToQuery = getWeek(dateFromBody);
@@ -103,7 +105,9 @@ router.post('/revenue/:period', async (req, res) => {
         let revenueByPeriod;
         switch (period) {
             case "day":
-                dateQuery = { $gte: dateFromBody, $lte: dateFromBody };
+                const startOfDay = new Date(dateFromBody.getFullYear(), dateFromBody.getMonth(), dateFromBody.getDate(), 0, 0, 0);
+                const endOfDay = new Date(dateFromBody.getFullYear(), dateFromBody.getMonth(), dateFromBody.getDate(), 23, 59, 59);
+                dateQuery = { $gte: startOfDay, $lte: endOfDay };
                 revenueByPeriod = await calculateRevenue(dateQuery);
                 break;
             case "week":
@@ -143,7 +147,9 @@ router.post('/popular-items/:period', async (req, res) => {
 
     switch (period) {
         case "day":
-            dateQuery = { $eq: dateFromBody};
+            const startOfDay = new Date(dateFromBody.getFullYear(), dateFromBody.getMonth(), dateFromBody.getDate(), 0, 0, 0);
+            const endOfDay = new Date(dateFromBody.getFullYear(), dateFromBody.getMonth(), dateFromBody.getDate(), 23, 59, 59);
+            dateQuery = { $gte: startOfDay, $lte: endOfDay };
             break;
         case "week":
             const weekToQuery = getWeek(dateFromBody);
