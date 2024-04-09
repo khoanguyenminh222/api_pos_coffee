@@ -83,14 +83,14 @@ router.post('/items-sold/:period', async (req, res) => {
 
 async function calculateRevenue(dateQuery) {
     return await Bill.aggregate([
-        { $match: { createdAt: dateQuery } },
-        { $group: { _id: null, totalRevenue: { $sum: "$totalAmount" } } }
+        { $match: { createdAt: dateQuery } }, // Lọc theo ngày/tuần/tháng
+        { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, totalRevenue: { $sum: "$totalAmount" } } }
     ]);
 }
 
 async function calculateTotalRevenue() {
     return await Bill.aggregate([
-        { $group: { _id: null, totalRevenue: { $sum: "$totalAmount" } } }
+        { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, totalRevenue: { $sum: "$totalAmount" } } }
     ]);
 }
 // doanh thu theo ngày tháng năm
