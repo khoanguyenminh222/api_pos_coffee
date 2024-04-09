@@ -49,15 +49,26 @@ router.post('/items-sold/:period', async (req, res) => {
             dateQuery = { $gte: yearToQuery.start, $lte: yearToQuery.end };
             break;
         case "all":
-            dateQuery = {};
-            break;
+            // Trả về tất cả các mặt hàng đã bán mà không phụ thuộc vào ngày
+            try {
+                const allItemsSold = await Bill.aggregate([
+                    { $unwind: "$drinks" },
+                    { $group: { _id: "$drinks.name", totalQuantity: { $sum: "$drinks.quantity" } } }
+                ]);
+                res.json(allItemsSold);
+                return; // Dừng việc thực thi tiếp tục của hàm sau khi đã gửi phản hồi
+            } catch (err) {
+                res.status(500).json({ message: err.message });
+                return; // Dừng việc thực thi tiếp tục của hàm nếu có lỗi
+            }
         default:
             return res.status(400).json({ message: "Invalid period" });
     }
 
+    // Thực hiện truy vấn theo khoảng thời gian nhất định
     try {
         const itemsSold = await Bill.aggregate([
-            { $match: { "drinks.createdAt": dateQuery } }, // Lọc theo ngày/tuần/tháng
+            { $match: { "drinks.createdAt": dateQuery } }, // Lọc theo ngày/tuần/tháng/năm
             { $unwind: "$drinks" },
             { $group: { _id: "$drinks.name", totalQuantity: { $sum: "$drinks.quantity" } } }
         ]);
