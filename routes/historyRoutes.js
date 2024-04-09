@@ -68,6 +68,8 @@ router.get('/:period/:userId?', async (req, res) => {
 
                     // Get transaction history with pagination
                     const bills = await Bill.find(userQuery)
+                        .populate('userId', 'fullname') // Thêm tham chiếu tới User model để lấy thông tin về fullname của người dùng
+                        .select('userId totalAmount createdAt') // Chọn các trường cần thiết
                         .limit(pageSize * 1)
                         .skip((page - 1) * pageSize)
                         .exec();
@@ -94,6 +96,8 @@ router.get('/:period/:userId?', async (req, res) => {
 
         // Get transaction history with pagination
         const bills = await Bill.find({ ...userQuery, createdAt: dateQuery })
+            .populate('userId', 'fullname') // Thêm tham chiếu tới User model để lấy thông tin về fullname của người dùng
+            .select('userId totalAmount createdAt') // Chọn các trường cần thiết
             .limit(pageSize * 1)
             .skip((page - 1) * pageSize)
             .exec();
