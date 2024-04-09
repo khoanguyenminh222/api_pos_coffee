@@ -143,7 +143,7 @@ router.post('/popular-items/:period', async (req, res) => {
 
     switch (period) {
         case "day":
-            dateQuery = { $gte: dateFromBody, $lte: dateFromBody };
+            dateQuery = { $eq: dateFromBody};
             break;
         case "week":
             const weekToQuery = getWeek(dateFromBody);
