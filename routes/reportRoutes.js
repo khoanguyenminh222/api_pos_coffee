@@ -67,6 +67,19 @@ router.post('/items-sold/:period', async (req, res) => {
     }
 });
 
+
+async function calculateRevenue(dateQuery) {
+    return await Bill.aggregate([
+        { $match: { createdAt: dateQuery } },
+        { $group: { _id: null, totalRevenue: { $sum: "$totalAmount" } } }
+    ]);
+}
+
+async function calculateTotalRevenue() {
+    return await Bill.aggregate([
+        { $group: { _id: null, totalRevenue: { $sum: "$totalAmount" } } }
+    ]);
+}
 // doanh thu theo ngày tháng năm
 router.post('/revenue/:period', async (req, res) => {
     const period = req.params.period;
@@ -75,34 +88,34 @@ router.post('/revenue/:period', async (req, res) => {
     // Kiểm tra xem ngày có được cung cấp trong phần thân của yêu cầu không
     const dateFromBody = req.body.date ? new Date(req.body.date) : new Date(); // Sử dụng ngày hiện tại nếu không có ngày được cung cấp
 
-    switch (period) {
-        case "day":
-            dateQuery = { $gte: dateFromBody, $lte: dateFromBody };
-            break;
-        case "week":
-            const weekToQuery = getWeek(dateFromBody);
-            dateQuery = { $gte: weekToQuery.start, $lte: weekToQuery.end };
-            break;
-        case "month":
-            const monthToQuery = getMonth(dateFromBody);
-            dateQuery = { $gte: monthToQuery.start, $lte: monthToQuery.end };
-            break;
-        case "year":
-            const yearToQuery = getYear(dateFromBody);
-            dateQuery = { $gte: yearToQuery.start, $lte: yearToQuery.end };
-            break;
-        case "all":
-            dateQuery = {};
-            break;  
-        default:
-            return res.status(400).json({ message: "Invalid period" });
-    }
-
     try {
-        const revenueByPeriod = await Bill.aggregate([
-            { $match: { createdAt: dateQuery } },
-            { $group: { _id: null, totalRevenue: { $sum: "$totalAmount" } } }
-        ]);
+        let revenueByPeriod;
+        switch (period) {
+            case "day":
+                dateQuery = { $gte: dateFromBody, $lte: dateFromBody };
+                revenueByPeriod = await calculateRevenue(dateQuery);
+                break;
+            case "week":
+                const weekToQuery = getWeek(dateFromBody);
+                dateQuery = { $gte: weekToQuery.start, $lte: weekToQuery.end };
+                revenueByPeriod = await calculateRevenue(dateQuery);
+                break;
+            case "month":
+                const monthToQuery = getMonth(dateFromBody);
+                dateQuery = { $gte: monthToQuery.start, $lte: monthToQuery.end };
+                revenueByPeriod = await calculateRevenue(dateQuery);
+                break;
+            case "year":
+                const yearToQuery = getYear(dateFromBody);
+                dateQuery = { $gte: yearToQuery.start, $lte: yearToQuery.end };
+                revenueByPeriod = await calculateRevenue(dateQuery);
+                break;
+            case "all":
+                revenueByPeriod = await calculateTotalRevenue();
+                break;  
+            default:
+                return res.status(400).json({ message: "Invalid period" });
+        }
         res.json(revenueByPeriod);
     } catch (err) {
         res.status(500).json({ message: err.message });
