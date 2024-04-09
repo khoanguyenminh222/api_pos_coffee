@@ -68,7 +68,7 @@ router.post('/items-sold/:period', async (req, res) => {
     // Thực hiện truy vấn theo khoảng thời gian nhất định
     try {
         const itemsSold = await Bill.aggregate([
-            { $match: { "drinks.createdAt": dateQuery } }, // Lọc theo ngày/tuần/tháng/năm
+            { $match: { "createdAt": dateQuery } }, // Lọc theo ngày/tuần/tháng/năm
             { $unwind: "$drinks" },
             { $group: { _id: "$drinks.name", totalQuantity: { $sum: "$drinks.quantity" } } }
         ]);
@@ -178,7 +178,7 @@ router.post('/popular-items/:period', async (req, res) => {
     // Thực hiện truy vấn theo khoảng thời gian nhất định
     try {
         const popularItems = await Bill.aggregate([
-            { $match: { "drinks.createdAt": dateQuery } }, // Lọc theo ngày/tuần/tháng/năm
+            { $match: { "createdAt": dateQuery } }, // Lọc theo ngày/tuần/tháng/năm
             { $unwind: "$drinks" },
             { $group: { _id: "$drinks.name", totalQuantity: { $sum: "$drinks.quantity" } } },
             { $sort: { totalQuantity: -1 } }
