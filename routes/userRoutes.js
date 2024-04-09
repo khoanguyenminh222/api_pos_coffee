@@ -121,6 +121,15 @@ router.get('/', async (req, res) => {
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
     }
 });
+router.get('/getAll', async (req, res) => {
+    try {
+        const users = await User.find();
+        res.json(users);
+    } catch (error) {
+        console.error('Lỗi khi lấy tất cả người dùng:', error);
+        res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
+    }
+});
 
 router.put('/:id', async (req, res) => {
     try {
