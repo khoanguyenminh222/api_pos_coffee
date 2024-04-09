@@ -84,14 +84,24 @@ router.post('/items-sold/:period', async (req, res) => {
 async function calculateRevenue(dateQuery) {
     return await Bill.aggregate([
         { $match: { createdAt: dateQuery } }, // Lọc theo ngày/tuần/tháng
-        { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, totalRevenue: { $sum: "$totalAmount" } } }
+        { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, totalRevenue: { $sum: "$totalAmount" } } },
+        { $sort: { "_id": 1 } }
     ]);
 }
 
 async function calculateTotalRevenue() {
     return await Bill.aggregate([
-        { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, totalRevenue: { $sum: "$totalAmount" } } }
+        { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, totalRevenue: { $sum: "$totalAmount" } } },
+        { $sort: { "_id": 1 } }
     ]);
+}
+// Hàm lấy tất cả các tháng trong năm
+function getAllMonthsOfYear(date) {
+    const months = [];
+    for (let month = 0; month < 12; month++) {
+        months.push(new Date(date.getFullYear(), month, 1));
+    }
+    return months;
 }
 // doanh thu theo ngày tháng năm
 router.post('/revenue/:period', async (req, res) => {
@@ -121,8 +131,8 @@ router.post('/revenue/:period', async (req, res) => {
                 revenueByPeriod = await calculateRevenue(dateQuery);
                 break;
             case "year":
-                const yearToQuery = getYear(dateFromBody);
-                dateQuery = { $gte: yearToQuery.start, $lte: yearToQuery.end };
+                const monthsOfYear = getAllMonthsOfYear(dateFromBody);
+                dateQuery = { $in: monthsOfYear };
                 revenueByPeriod = await calculateRevenue(dateQuery);
                 break;
             case "all":
