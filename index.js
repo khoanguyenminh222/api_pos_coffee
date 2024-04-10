@@ -4,6 +4,8 @@ const app = express();
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const path = require("path");
+const session = require('express-session');
+
 const admin = require("firebase-admin");
 const serviceAccount = require("./shoesstore-fc02b-firebase-adminsdk-sfm26-70e11bd8af.json");
 
@@ -17,10 +19,18 @@ const historyRoutes = require("./routes/historyRoutes");
 
 require('dotenv/config')
 
+const secretKey = process.env.KEY_SECRET;
 // Sử dụng middleware cors
 app.use(express.json());
 app.use(cors());
 app.use(morgan('tiny'));
+
+app.use(session({
+    secret: secretKey, // Key bí mật để ký session ID cookie
+    resave: false,
+    saveUninitialized: false,
+  }));
+
 
 if (!admin.apps.length) {
   admin.initializeApp({

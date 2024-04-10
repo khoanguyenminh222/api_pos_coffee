@@ -3,16 +3,9 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 
-require('dotenv').config();
-
 const User = require('../models/User');
+const authenticateSession = require('../middleware/authenticateSession');
 
-const secretKey = process.env.KEY_SECRET;
-router.use(session({
-    secret: secretKey, // Key bí mật để ký session ID cookie
-    resave: false,
-    saveUninitialized: false,
-  }));
 
 function removeVietnameseAccent(str) {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -99,7 +92,7 @@ router.post('/login', async (req, res) => {
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
     }
 });
-router.get('/getAll', async (req, res) => {
+router.get('/getAll', authenticateSession, async (req, res) => {
     try {
         const users = await User.find();
         res.json(users);
