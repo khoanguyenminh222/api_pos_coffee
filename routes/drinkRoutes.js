@@ -5,7 +5,6 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const admin = require('firebase-admin');
-const verifyToken = require('../middleware/verifyJWT');
 const Drink = require('../models/Drink');
 
 const tempDir = path.join(os.tmpdir(), 'uploads');
@@ -27,7 +26,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-router.get('/', verifyToken, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const drinks = await Drink.find();
     res.json(drinks);
