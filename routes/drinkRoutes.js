@@ -27,7 +27,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-router.get('/',verifyToken, async (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
   try {
     const drinks = await Drink.find();
     res.json(drinks);

@@ -98,7 +98,7 @@ router.post('/login', async (req, res) => {
         }
         // Check username and password
         // If correct, create a JWT and send it back to the client
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' }); // Expires in 1 week
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' }); // Expires in 1 week
         // Đăng nhập thành công
         res.status(201).send({ auth: true, token: token, message: "Đăng nhập thành công" });
     } catch (error) {
