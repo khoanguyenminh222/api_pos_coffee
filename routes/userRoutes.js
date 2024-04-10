@@ -5,6 +5,11 @@ const session = require('express-session');
 
 const User = require('../models/User');
 
+router.use(session({
+    secret: process.env.KEY_SECRET, // Key bí mật để ký session ID cookie
+    resave: false,
+    saveUninitialized: false,
+  }));
 
 function removeVietnameseAccent(str) {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
