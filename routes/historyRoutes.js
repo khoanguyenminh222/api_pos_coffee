@@ -40,6 +40,17 @@ router.get('/:period/:userId?', async (req, res) => {
         if (userId) {
             userQuery = { userId };
         }
+
+        // Thêm điều kiện tìm kiếm theo mã hóa đơn
+        const billCode = req.query.billCode; // Lấy mã hóa đơn từ query string
+        let billCodeQuery = {}; // Điều kiện tìm kiếm cho mã hóa đơn
+
+        if (billCode) {
+            billCodeQuery = { _id: billCode }; // Tìm theo mã hóa đơn nếu có
+        }
+        const totalCount = await Bill.countDocuments({ ...userQuery, ...billCodeQuery });
+        // Calculate total pages based on total count and page size
+        const totalPages = Math.ceil(totalCount / pageSize);
         switch (period) {
             case 'day':
                 const startOfDay = new Date(dateFromBody.getFullYear(), dateFromBody.getMonth(), dateFromBody.getDate(), 0, 0, 0);
@@ -63,11 +74,12 @@ router.get('/:period/:userId?', async (req, res) => {
                 try {
                     // Get total amount of transactions
                     const totalAmountSum = await Bill.aggregate([
+                        { $match: { ...userQuery, ...billCodeQuery } }, // Thêm điều kiện tìm kiếm mã hóa đơn nếu có
                         { $group: { _id: null, totalAmount: { $sum: "$totalAmount" } } }
                     ]);
 
                     // Get transaction history with pagination
-                    const bills = await Bill.find(userQuery)
+                    const bills = await Bill.find({ ...userQuery, ...billCodeQuery })
                         .populate('userId', 'fullname') // Thêm tham chiếu tới User model để lấy thông tin về fullname của người dùng
                         .select('userId totalAmount createdAt') // Chọn các trường cần thiết
                         .limit(pageSize * 1)
@@ -76,7 +88,7 @@ router.get('/:period/:userId?', async (req, res) => {
 
                     return res.json({
                         totalAmountSum: totalAmountSum.length ? totalAmountSum[0].totalAmount : 0,
-                        totalPages: Math.ceil(bills.length / pageSize),
+                        totalPages: totalPages,
                         currentPage: page,
                         transactions: bills
                     });// Dừng việc thực thi tiếp tục của hàm sau khi đã gửi phản hồi
@@ -91,12 +103,12 @@ router.get('/:period/:userId?', async (req, res) => {
         
         // Get total amount of transactions
         const totalAmountSum = await Bill.aggregate([
-            { $match: { createdAt: dateQuery } },
+            { $match: { ...userQuery, ...billCodeQuery, createdAt: dateQuery } },
             { $group: { _id: null, totalAmount: { $sum: "$totalAmount" } } }
         ]);
 
         // Get transaction history with pagination
-        const bills = await Bill.find({ ...userQuery, createdAt: dateQuery })
+        const bills = await Bill.find({ ...userQuery, ...billCodeQuery, createdAt: dateQuery })
             .populate('userId', 'fullname') // Thêm tham chiếu tới User model để lấy thông tin về fullname của người dùng
             .select('userId totalAmount createdAt') // Chọn các trường cần thiết
             .limit(pageSize * 1)
@@ -105,7 +117,7 @@ router.get('/:period/:userId?', async (req, res) => {
 
         res.json({
             totalAmountSum: totalAmountSum.length ? totalAmountSum[0].totalAmount : 0,
-            totalPages: Math.ceil(bills.length / pageSize),
+            totalPages: totalPages,
             currentPage: page,
             transactions: bills
         });
