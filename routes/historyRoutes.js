@@ -28,7 +28,8 @@ function getYear(date) {
 // GET transaction history with pagination and total amount
 router.get('/:period/:userId?', async (req, res) => {
     try {
-        let { page = 1, pageSize = 10 } = req.query;
+        const page = parseInt(req.query.page) || 1; // Trang mặc định là 1 nếu không có tham số page
+        const pageSize = parseInt(req.query.pageSize) || 10; // Số lượng mục trên mỗi trang mặc định là 10 nếu không có tham số pageSize
         const period = req.params.period;
         const userId = req.params.userId; // userId có thể có hoặc không
         const dateFromBody = req.query.date ? new Date(req.query.date) : new Date();
