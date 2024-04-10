@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
+const verifyToken = require('../middleware/verifyJWT');
 const User = require('../models/User');
 
 
@@ -34,15 +34,15 @@ router.post('/register', async (req, res) => {
         if (!username || username === '') {
             username = generateUsername(fullname, phoneNumber);
         }
-        if(!password || password==''){
+        if (!password || password == '') {
             password = '1';
         }
 
         // Khởi tạo một người dùng mới với các thông tin được truyền vào
-        const newUser = new User({ 
-            username, 
+        const newUser = new User({
+            username,
             password: password ? await bcrypt.hash(password, 10) : undefined, // Mã hóa mật khẩu nếu được cung cấp
-            fullname, 
+            fullname,
             role,
             dateOfBirth,
             gender,
@@ -60,20 +60,25 @@ router.post('/register', async (req, res) => {
     }
 });
 
+// Route để lấy thông tin người dùng dựa trên token
+router.get('/profile', verifyToken, async (req, res) => {
+    try {
+        // Lấy userId từ middleware verifyToken
+        const userId = req.userId;
 
-// Middleware for verifying JWT
-function verifyToken(req, res, next) {
-    const token = req.headers['authorization'];
-    if (!token) return res.status(403).send({ auth: false, message: 'No token provided.' });
-  
-    jwt.verify(token, process.env.JWT_SECRET, function(err, decoded) {
-      if (err) return res.status(500).send({ auth: false, message: 'Failed to authenticate token.' });
-  
-      // If everything is good, save to request for use in other routes
-      req.userId = decoded.id;
-      next();
-    });
-  }
+        // Tìm thông tin người dùng trong cơ sở dữ liệu
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Trả về thông tin người dùng
+        res.status(200).json(user);
+    } catch (error) {
+        console.error('Error getting user profile:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
 
 // Route để đăng nhập
 router.post('/login', async (req, res) => {
@@ -93,9 +98,9 @@ router.post('/login', async (req, res) => {
         }
         // Check username and password
         // If correct, create a JWT and send it back to the client
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1w' }); // Expires in 1 week
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' }); // Expires in 1 week
         // Đăng nhập thành công
-        res.status(201).send({ auth: true, token: token, message:"Đăng nhập thành công" });
+        res.status(201).send({ auth: true, token: token, message: "Đăng nhập thành công" });
     } catch (error) {
         console.error('Lỗi khi đăng nhập:', error);
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
