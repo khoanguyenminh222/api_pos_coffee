@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const User = require('../models/User');
 
@@ -60,6 +61,20 @@ router.post('/register', async (req, res) => {
 });
 
 
+// Middleware for verifying JWT
+function verifyToken(req, res, next) {
+    const token = req.headers['authorization'];
+    if (!token) return res.status(403).send({ auth: false, message: 'No token provided.' });
+  
+    jwt.verify(token, process.env.JWT_SECRET, function(err, decoded) {
+      if (err) return res.status(500).send({ auth: false, message: 'Failed to authenticate token.' });
+  
+      // If everything is good, save to request for use in other routes
+      req.userId = decoded.id;
+      next();
+    });
+  }
+
 // Route để đăng nhập
 router.post('/login', async (req, res) => {
     try {
@@ -76,9 +91,11 @@ router.post('/login', async (req, res) => {
         if (!match) {
             return res.status(401).json({ message: 'Tên đăng nhập hoặc mật khẩu không đúng' });
         }
-
+        // Check username and password
+        // If correct, create a JWT and send it back to the client
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1w' }); // Expires in 1 week
         // Đăng nhập thành công
-        res.status(201).json({ message: 'Đăng nhập thành công' });
+        res.status(201).send({ auth: true, token: token, message:"Đăng nhập thành công" });
     } catch (error) {
         console.error('Lỗi khi đăng nhập:', error);
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
