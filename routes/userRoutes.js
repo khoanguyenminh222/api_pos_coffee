@@ -87,7 +87,7 @@ router.post('/login', async (req, res) => {
         // Đăng nhập thành công
         // Lưu thông tin người dùng trong cookie trên trình duyệt
         res.cookie('userId', user._id, { httpOnly: true });
-        res.status(201).send({ message: "Đăng nhập thành công", user:user });
+        res.status(201).send({ message: "Đăng nhập thành công" });
     } catch (error) {
         console.error('Lỗi khi đăng nhập:', error);
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
