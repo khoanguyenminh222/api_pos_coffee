@@ -62,7 +62,7 @@ router.get('/:period/:userId?', async (req, res) => {
                 // Trả về tất cả các mặt hàng đã bán mà không phụ thuộc vào ngày
                 try {
                     // Get total amount of transactions
-                    const totalAmount = await Bill.aggregate([
+                    const totalAmountSum = await Bill.aggregate([
                         { $group: { _id: null, totalAmount: { $sum: "$totalAmount" } } }
                     ]);
 
@@ -73,14 +73,10 @@ router.get('/:period/:userId?', async (req, res) => {
                         .limit(pageSize * 1)
                         .skip((page - 1) * pageSize)
                         .exec();
-                    let totalAmountSum = 0;
-                    bills.forEach(bill => {
-                        totalAmountSum += bill.totalAmount;
-                    });
+
                     return res.json({
-                        totalAmountSum: totalAmountSum,
-                        totalAmount: totalAmount.length ? totalAmount[0].totalAmount : 0,
-                        totalPages: Math.ceil(transactions.length / pageSize),
+                        totalAmountSum: totalAmountSum.length ? totalAmountSum[0].totalAmount : 0,
+                        totalPages: Math.ceil(bills.length / pageSize),
                         currentPage: page,
                         transactions: bills
                     });// Dừng việc thực thi tiếp tục của hàm sau khi đã gửi phản hồi
@@ -94,7 +90,7 @@ router.get('/:period/:userId?', async (req, res) => {
 
         
         // Get total amount of transactions
-        const totalAmount = await Bill.aggregate([
+        const totalAmountSum = await Bill.aggregate([
             { $match: { createdAt: dateQuery } },
             { $group: { _id: null, totalAmount: { $sum: "$totalAmount" } } }
         ]);
@@ -107,15 +103,9 @@ router.get('/:period/:userId?', async (req, res) => {
             .skip((page - 1) * pageSize)
             .exec();
 
-        let totalAmountSum = 0;
-        bills.forEach(bill => {
-            totalAmountSum += bill.totalAmount;
-        });
-
         res.json({
-            totalAmountSum: totalAmountSum,
-            totalAmount: totalAmount.length ? totalAmount[0].totalAmount : 0,
-            totalPages: Math.ceil(transactions.length / pageSize),
+            totalAmountSum: totalAmountSum.length ? totalAmountSum[0].totalAmount : 0,
+            totalPages: Math.ceil(bills.length / pageSize),
             currentPage: page,
             transactions: bills
         });
