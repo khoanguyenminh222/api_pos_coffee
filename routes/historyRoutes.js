@@ -48,9 +48,6 @@ router.get('/:period/:userId?', async (req, res) => {
         if (billCode) {
             billCodeQuery = { _id: billCode }; // Tìm theo mã hóa đơn nếu có
         }
-        const totalCount = await Bill.countDocuments({ ...userQuery, ...billCodeQuery });
-        // Calculate total pages based on total count and page size
-        const totalPages = Math.ceil(totalCount / pageSize);
         switch (period) {
             case 'day':
                 const startOfDay = new Date(dateFromBody.getFullYear(), dateFromBody.getMonth(), dateFromBody.getDate(), 0, 0, 0);
@@ -72,6 +69,10 @@ router.get('/:period/:userId?', async (req, res) => {
             case "all":
                 // Trả về tất cả các mặt hàng đã bán mà không phụ thuộc vào ngày
                 try {
+                    const totalCount = await Bill.countDocuments({
+                        ...userQuery,
+                        ...billCodeQuery
+                    });
                     // Get total amount of transactions
                     const totalAmountSum = await Bill.aggregate([
                         { $match: { ...userQuery, ...billCodeQuery } }, // Thêm điều kiện tìm kiếm mã hóa đơn nếu có
@@ -88,7 +89,7 @@ router.get('/:period/:userId?', async (req, res) => {
 
                     return res.json({
                         totalAmountSum: totalAmountSum.length ? totalAmountSum[0].totalAmount : 0,
-                        totalPages: totalPages,
+                        totalPages: Math.ceil(totalCount / pageSize),
                         currentPage: page,
                         transactions: bills
                     });// Dừng việc thực thi tiếp tục của hàm sau khi đã gửi phản hồi
@@ -100,7 +101,11 @@ router.get('/:period/:userId?', async (req, res) => {
                 return res.status(400).json({ message: 'Invalid period' });
         }
 
-        
+        const totalCount = await Bill.countDocuments({
+            ...userQuery,
+            ...billCodeQuery,
+            createdAt: dateQuery
+        });
         // Get total amount of transactions
         const totalAmountSum = await Bill.aggregate([
             { $match: { ...userQuery, ...billCodeQuery, createdAt: dateQuery } },
@@ -117,7 +122,7 @@ router.get('/:period/:userId?', async (req, res) => {
 
         res.json({
             totalAmountSum: totalAmountSum.length ? totalAmountSum[0].totalAmount : 0,
-            totalPages: totalPages,
+            totalPages: Math.ceil(totalCount / pageSize),
             currentPage: page,
             transactions: bills
         });
