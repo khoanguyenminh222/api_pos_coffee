@@ -3,10 +3,13 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 
+require('dotenv').config();
+
 const User = require('../models/User');
 
+const secretKey = process.env.KEY_SECRET;
 router.use(session({
-    secret: process.env.KEY_SECRET, // Key bí mật để ký session ID cookie
+    secret: secretKey, // Key bí mật để ký session ID cookie
     resave: false,
     saveUninitialized: false,
   }));
@@ -89,7 +92,7 @@ router.post('/login', async (req, res) => {
         }
 
         // Đăng nhập thành công
-        req.session.username = { username };
+        req.session.user = { userId: user._id };
         res.status(201).send({ message: "Đăng nhập thành công" });
     } catch (error) {
         console.error('Lỗi khi đăng nhập:', error);
