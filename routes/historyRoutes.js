@@ -76,7 +76,7 @@ router.get('/:period/:userId?', async (req, res) => {
 
                     return res.json({
                         totalAmount: totalAmount.length ? totalAmount[0].totalAmount : 0,
-                        totalPages: Math.ceil(totalAmount.length / pageSize),
+                        totalPages: Math.ceil(transactions.length / pageSize),
                         currentPage: page,
                         transactions: bills
                     });// Dừng việc thực thi tiếp tục của hàm sau khi đã gửi phản hồi
@@ -104,7 +104,7 @@ router.get('/:period/:userId?', async (req, res) => {
 
         res.json({
             totalAmount: totalAmount.length ? totalAmount[0].totalAmount : 0,
-            totalPages: Math.ceil(totalAmount.length / pageSize),
+            totalPages: Math.ceil(transactions.length / pageSize),
             currentPage: page,
             transactions: bills
         });
