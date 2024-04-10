@@ -73,8 +73,12 @@ router.get('/:period/:userId?', async (req, res) => {
                         .limit(pageSize * 1)
                         .skip((page - 1) * pageSize)
                         .exec();
-
+                    let totalAmountSum = 0;
+                    bills.forEach(bill => {
+                        totalAmountSum += bill.totalAmount;
+                    });
                     return res.json({
+                        totalAmountSum: totalAmountSum,
                         totalAmount: totalAmount.length ? totalAmount[0].totalAmount : 0,
                         totalPages: Math.ceil(transactions.length / pageSize),
                         currentPage: page,
@@ -88,6 +92,7 @@ router.get('/:period/:userId?', async (req, res) => {
                 return res.status(400).json({ message: 'Invalid period' });
         }
 
+        
         // Get total amount of transactions
         const totalAmount = await Bill.aggregate([
             { $match: { createdAt: dateQuery } },
@@ -102,7 +107,13 @@ router.get('/:period/:userId?', async (req, res) => {
             .skip((page - 1) * pageSize)
             .exec();
 
+        let totalAmountSum = 0;
+        bills.forEach(bill => {
+            totalAmountSum += bill.totalAmount;
+        });
+
         res.json({
+            totalAmountSum: totalAmountSum,
             totalAmount: totalAmount.length ? totalAmount[0].totalAmount : 0,
             totalPages: Math.ceil(transactions.length / pageSize),
             currentPage: page,
