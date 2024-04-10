@@ -82,6 +82,7 @@ router.post('/login', async (req, res) => {
         }
 
         // Đăng nhập thành công
+        req.session.username = { username };
         res.status(201).send({ message: "Đăng nhập thành công" });
     } catch (error) {
         console.error('Lỗi khi đăng nhập:', error);
