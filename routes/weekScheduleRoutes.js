@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const WeekSchedule = require('../models/WeekSchedule');
+const authenticateSession = require('../middleware/authenticateSession');
 
 // Lấy thông tin lịch làm việc của một nhân viên
 router.get('/:userId', authenticateSession, async (req, res) => {
