@@ -4,6 +4,7 @@ const multer = require("multer");
 const fs = require('fs');
 const os = require('os');
 const path = require("path");
+const authenticateJWT = require('../middleware/authenticateJWT');
 const admin = require("firebase-admin");
 
 
@@ -36,7 +37,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Route GET: Lấy danh sách tất cả các categories
-router.get("/",  async (req, res) => {
+router.get("/", authenticateJWT,  async (req, res) => {
   try {
     const categories = await Category.find();
     res.json(categories);

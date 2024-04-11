@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const User = require('../models/User');
-
+const authenticateJWT = require('../middleware/authenticateJWT');
 
 function removeVietnameseAccent(str) {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -83,7 +84,8 @@ router.post('/login', async (req, res) => {
         }
 
         // Đăng nhập thành công
-        res.status(201).send({ message: "Đăng nhập thành công", userId: user._id});
+        const token = jwt.sign({ userId: user.id }, process.env.KEY_SECRET, { expiresIn: '1h' });
+        res.status(201).send({ message: "Đăng nhập thành công", userId: user._id, token: token});
     } catch (error) {
         console.error('Lỗi khi đăng nhập:', error);
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
