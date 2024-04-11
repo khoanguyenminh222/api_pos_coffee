@@ -1,10 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const WeekSchedule = require('../models/WeekSchedule');
-const authenticateSession = require('../middleware/authenticateSession');
-
 // Lấy thông tin lịch làm việc của một nhân viên
-router.get('/:userId', authenticateSession, async (req, res) => {
+router.get('/:userId',  async (req, res) => {
     const userId = req.params.userId;
     try {
         // Lấy ngày bắt đầu và kết thúc của tuần từ query parameters
@@ -44,7 +42,7 @@ router.get('/:userId', authenticateSession, async (req, res) => {
     }
 });
 
-router.get('/', authenticateSession, async (req, res) => {
+router.get('/',  async (req, res) => {
     try {
         // Lấy ngày bắt đầu và kết thúc của tuần từ query parameters
         const { startDate, endDate } = req.query;
@@ -69,7 +67,7 @@ router.get('/', authenticateSession, async (req, res) => {
 });
 
 // Tạo lịch làm việc cho một tuần của một nhân viên
-router.post('/', authenticateSession, async (req, res) => {
+router.post('/',  async (req, res) => {
     const { userId, weeks } = req.body;
 
     try {
@@ -107,7 +105,7 @@ router.post('/', authenticateSession, async (req, res) => {
 });
 
 // Cập nhật lịch làm việc của một nhân viên
-router.put('/:userId', authenticateSession, async (req, res) => {
+router.put('/:userId',  async (req, res) => {
     const userId = req.params.userId;
     const { startDay, endDay, newWeeks } = req.body;
 
@@ -143,7 +141,7 @@ router.put('/:userId', authenticateSession, async (req, res) => {
 });
 
 // Xóa lịch làm việc của một người dùng trong một khoảng thời gian
-router.delete('/:userId', authenticateSession, async (req, res) => {
+router.delete('/:userId',  async (req, res) => {
     const userId = req.params.userId;
     try {
         // Lấy ngày bắt đầu và kết thúc của khoảng thời gian từ query parameters

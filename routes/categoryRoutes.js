@@ -5,7 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require("path");
 const admin = require("firebase-admin");
-const authenticateSession = require('../middleware/authenticateSession');
+
 
 const Category = require("../models/Category");
 
@@ -36,7 +36,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Route GET: Lấy danh sách tất cả các categories
-router.get("/", authenticateSession, async (req, res) => {
+router.get("/",  async (req, res) => {
   try {
     const categories = await Category.find();
     res.json(categories);
@@ -46,7 +46,7 @@ router.get("/", authenticateSession, async (req, res) => {
 });
 
 // Route GET: Lấy một category theo ID
-router.get("/:id", authenticateSession, async (req, res) => {
+router.get("/:id",  async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
     if (category == null) {
@@ -59,7 +59,7 @@ router.get("/:id", authenticateSession, async (req, res) => {
 });
 
 // Route POST: Tải hình ảnh lên Firebase và tạo mới một category
-router.post("/", authenticateSession, upload.single("img"), async (req, res) => {
+router.post("/",  upload.single("img"), async (req, res) => {
   try {
     const file = req.file;
     if (!file) {
@@ -91,7 +91,7 @@ router.post("/", authenticateSession, upload.single("img"), async (req, res) => 
 });
 
 // Route PUT: Cập nhật hình ảnh của một category trên Firebase và trong cơ sở dữ liệu
-router.put("/:id", authenticateSession, upload.single("img"), async (req, res) => {
+router.put("/:id",  upload.single("img"), async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
     if (!category) {
@@ -131,7 +131,7 @@ router.put("/:id", authenticateSession, upload.single("img"), async (req, res) =
 });
 
 // Route DELETE: Xóa một category
-router.delete("/:id", authenticateSession, async (req, res) => {
+router.delete("/:id",  async (req, res) => {
   try {
     const category = await Category.findOneAndDelete({ _id: req.params.id });
     if (!category) {
