@@ -6,6 +6,7 @@ const os = require('os');
 const path = require('path');
 const admin = require('firebase-admin');
 const Drink = require('../models/Drink');
+const authenticateSession = require('../middleware/authenticateSession');
 
 const tempDir = path.join(os.tmpdir(), 'uploads');
 if (!fs.existsSync(tempDir)) {
@@ -26,7 +27,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-router.get('/', async (req, res) => {
+router.get('/', authenticateSession, async (req, res) => {
   try {
     const drinks = await Drink.find();
     res.json(drinks);
@@ -35,7 +36,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get("/category/:categoryId", async (req, res) => {
+router.get("/category/:categoryId", authenticateSession, async (req, res) => {
   try {
     const drinks = await Drink.find({ categoryId: req.params.categoryId });
     res.json(drinks);
@@ -44,7 +45,7 @@ router.get("/category/:categoryId", async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', authenticateSession, async (req, res) => {
   try {
     const drink = await Drink.findById(req.params.id);
     if (drink == null) {
@@ -56,7 +57,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.post('/', upload.single('image'), async (req, res) => {
+router.post('/', authenticateSession, upload.single('image'), async (req, res) => {
   try {
     const file = req.file;
     if (!file) {
@@ -86,7 +87,7 @@ router.post('/', upload.single('image'), async (req, res) => {
   }
 });
 
-router.put('/:id', upload.single('image'), async (req, res) => {
+router.put('/:id', authenticateSession, upload.single('image'), async (req, res) => {
   try {
     const drink = await Drink.findById(req.params.id);
     if (!drink) {
@@ -117,7 +118,7 @@ router.put('/:id', upload.single('image'), async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateSession, async (req, res) => {
   try {
     const drink = await Drink.findOneAndDelete({ _id: req.params.id });
     if (!drink) {

@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const session = require('express-session');
 
 const User = require('../models/User');
 const authenticateSession = require('../middleware/authenticateSession');
@@ -86,6 +85,7 @@ router.post('/login', async (req, res) => {
 
         // Đăng nhập thành công
         // Lưu thông tin người dùng trong cookie trên trình duyệt
+        req.session.user = { id: user._id };
         res.status(201).send({ message: "Đăng nhập thành công", userId: user._id });
     } catch (error) {
         console.error('Lỗi khi đăng nhập:', error);
@@ -102,7 +102,7 @@ router.get('/getAll', authenticateSession, async (req, res) => {
     }
 });
 
-router.get('/username/:username', async (req, res) => {
+router.get('/username/:username', authenticateSession, async (req, res) => {
     try {
         const username = req.params.username;
         const user = await User.findOne({ username });
@@ -116,7 +116,7 @@ router.get('/username/:username', async (req, res) => {
     }
 });
 
-router.get('/userId/:userId', async (req, res) => {
+router.get('/userId/:userId', authenticateSession, async (req, res) => {
     try {
         const userId = req.params.userId;
         const user = await User.findById(userId);
@@ -130,7 +130,7 @@ router.get('/userId/:userId', async (req, res) => {
     }
 });
 
-router.get('/', async (req, res) => {
+router.get('/', authenticateSession, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1; // Trang mặc định là 1 nếu không có tham số page
         const pageSize = parseInt(req.query.pageSize) || 10; // Số lượng mục trên mỗi trang mặc định là 10 nếu không có tham số pageSize
@@ -153,7 +153,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticateSession, async (req, res) => {
     try {
         const userId = req.params.id;
         let updatedUserData = req.body;
@@ -168,7 +168,7 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateSession, async (req, res) => {
     try {
         const userId = req.params.id;
         const deletedUser = await User.findByIdAndDelete(userId);

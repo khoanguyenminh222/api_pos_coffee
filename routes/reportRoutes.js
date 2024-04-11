@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Bill = require('../models/Bill');
+const authenticateSession = require('../middleware/authenticateSession');
 
 function getWeek(date) {
     const startOfWeek = new Date(date);
@@ -27,7 +28,7 @@ function getYear(date) {
 }
 
 // đếm số lượng bán ra
-router.get('/items-sold/:period', async (req, res) => {
+router.get('/items-sold/:period',authenticateSession, async (req, res) => {
     const period = req.params.period;
     const dateFromBody = req.query.date ? new Date(req.query.date) : new Date();
     let dateQuery = {};
@@ -104,7 +105,7 @@ function getAllMonthsOfYear(date) {
     return months;
 }
 // doanh thu theo ngày tháng năm
-router.get('/revenue/:period', async (req, res) => {
+router.get('/revenue/:period', authenticateSession, async (req, res) => {
     const period = req.params.period;
     let dateQuery = {};
 
@@ -148,7 +149,7 @@ router.get('/revenue/:period', async (req, res) => {
 });
 
 // mặt hàng phổ biến
-router.get('/popular-items/:period', async (req, res) => {
+router.get('/popular-items/:period', authenticateSession, async (req, res) => {
     const period = req.params.period;
     let dateQuery = {};
 
