@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 
 const Bill = require('../models/Bill');
-
+const authenticateJWT = require('../middleware/authenticateJWT');
 
 // Route để tạo hóa đơn mới
-router.post('/', async (req, res) => {
+router.post('/', authenticateJWT,async (req, res) => {
     try {
         const newBill = new Bill(req.body);
         await newBill.save();
@@ -17,7 +17,7 @@ router.post('/', async (req, res) => {
 });
 
 // Route để xoá hóa đơn
-router.delete('/:id',  async (req, res) => {
+router.delete('/:id', authenticateJWT, async (req, res) => {
     try {
         const deletedBill = await Bill.findByIdAndDelete(req.params.id);
         if (!deletedBill) {
@@ -31,7 +31,7 @@ router.delete('/:id',  async (req, res) => {
 });
 
 // Route để cập nhật hóa đơn
-router.put('/:id',  async (req, res) => {
+router.put('/:id', authenticateJWT, async (req, res) => {
     try {
         const updatedBill = await Bill.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!updatedBill) {
@@ -45,7 +45,7 @@ router.put('/:id',  async (req, res) => {
 });
 
 // Route để lấy một hóa đơn bằng ID
-router.get('/:id',  async (req, res) => {
+router.get('/:id', authenticateJWT, async (req, res) => {
     try {
         const bill = await Bill.findById(req.params.id);
         if (!bill) {
@@ -59,7 +59,7 @@ router.get('/:id',  async (req, res) => {
 });
 
 // Route để lấy tất cả các hóa đơn
-router.get('/',  async (req, res) => {
+router.get('/', authenticateJWT, async (req, res) => {
     try {
         const bills = await Bill.find();
         res.json(bills);
@@ -70,7 +70,7 @@ router.get('/',  async (req, res) => {
 });
 
 // Route để lấy các hóa đơn của một người dùng
-router.get('/user/:userId',  async (req, res) => {
+router.get('/user/:userId', authenticateJWT, async (req, res) => {
     try {
         const userId = req.params.userId;
         // Truy vấn các hóa đơn của người dùng dựa trên userId

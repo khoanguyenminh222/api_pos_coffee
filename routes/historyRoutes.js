@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Bill = require('../models/Bill');
-
+const authenticateJWT = require('../middleware/authenticateJWT');
 
 function getWeek(date) {
     const startOfWeek = new Date(date);
@@ -27,7 +27,7 @@ function getYear(date) {
     return { start: startOfYear, end: endOfYear };
 }
 // GET transaction history with pagination and total amount
-router.get('/:period/:userId?',  async (req, res) => {
+router.get('/:period/:userId?', authenticateJWT, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1; // Trang mặc định là 1 nếu không có tham số page
         const pageSize = parseInt(req.query.pageSize) || 10; // Số lượng mục trên mỗi trang mặc định là 10 nếu không có tham số pageSize

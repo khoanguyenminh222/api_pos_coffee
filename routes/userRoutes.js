@@ -91,7 +91,7 @@ router.post('/login', async (req, res) => {
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
     }
 });
-router.get('/getAll', async (req, res) => {
+router.get('/getAll', authenticateJWT, async (req, res) => {
     try {
         const users = await User.find();
         res.json(users);
@@ -101,7 +101,7 @@ router.get('/getAll', async (req, res) => {
     }
 });
 
-router.get('/username/:username', async (req, res) => {
+router.get('/username/:username', authenticateJWT, async (req, res) => {
     try {
         const username = req.params.username;
         const user = await User.findOne({ username });
@@ -115,7 +115,7 @@ router.get('/username/:username', async (req, res) => {
     }
 });
 
-router.get('/userId/:userId', async (req, res) => {
+router.get('/userId/:userId', authenticateJWT, async (req, res) => {
     try {
         const userId = req.params.userId;
         const user = await User.findById(userId);
@@ -129,7 +129,7 @@ router.get('/userId/:userId', async (req, res) => {
     }
 });
 
-router.get('/', async (req, res) => {
+router.get('/', authenticateJWT, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1; // Trang mặc định là 1 nếu không có tham số page
         const pageSize = parseInt(req.query.pageSize) || 10; // Số lượng mục trên mỗi trang mặc định là 10 nếu không có tham số pageSize
@@ -152,7 +152,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticateJWT, async (req, res) => {
     try {
         const userId = req.params.id;
         let updatedUserData = req.body;
@@ -167,7 +167,7 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateJWT, async (req, res) => {
     try {
         const userId = req.params.id;
         const deletedUser = await User.findByIdAndDelete(userId);

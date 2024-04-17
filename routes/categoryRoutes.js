@@ -47,7 +47,7 @@ router.get("/", authenticateJWT,  async (req, res) => {
 });
 
 // Route GET: Lấy một category theo ID
-router.get("/:id",  async (req, res) => {
+router.get("/:id", authenticateJWT,  async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
     if (category == null) {
@@ -60,7 +60,7 @@ router.get("/:id",  async (req, res) => {
 });
 
 // Route POST: Tải hình ảnh lên Firebase và tạo mới một category
-router.post("/",  upload.single("img"), async (req, res) => {
+router.post("/", authenticateJWT,  upload.single("img"), async (req, res) => {
   try {
     const file = req.file;
     if (!file) {
@@ -92,7 +92,7 @@ router.post("/",  upload.single("img"), async (req, res) => {
 });
 
 // Route PUT: Cập nhật hình ảnh của một category trên Firebase và trong cơ sở dữ liệu
-router.put("/:id",  upload.single("img"), async (req, res) => {
+router.put("/:id", authenticateJWT, upload.single("img"), async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
     if (!category) {
@@ -132,7 +132,7 @@ router.put("/:id",  upload.single("img"), async (req, res) => {
 });
 
 // Route DELETE: Xóa một category
-router.delete("/:id",  async (req, res) => {
+router.delete("/:id", authenticateJWT,  async (req, res) => {
   try {
     const category = await Category.findOneAndDelete({ _id: req.params.id });
     if (!category) {
