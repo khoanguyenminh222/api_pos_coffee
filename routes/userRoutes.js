@@ -85,7 +85,7 @@ router.post('/login', async (req, res) => {
 
         // Đăng nhập thành công
         const token = jwt.sign({ userId: user.id }, process.env.KEY_SECRET, { expiresIn: '24h' });
-        res.status(201).send({ message: "Đăng nhập thành công", userId: user._id, token: token});
+        res.status(201).send({ message: "Đăng nhập thành công", token: token});
     } catch (error) {
         console.error('Lỗi khi đăng nhập:', error);
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
