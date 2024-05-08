@@ -6,9 +6,30 @@ const authenticateJWT = require('../middleware/authenticateJWT');
 
 // Route để tạo hóa đơn mới
 router.post('/', authenticateJWT,async (req, res) => {
+    const { drinks } = req.body;
     try {
         const newBill = new Bill(req.body);
         await newBill.save();
+        for (const drink of drinks) {
+            // Lặp qua từng thành phần của mỗi đồ uống
+            for (const { id: drinkId, quantity } of drink.ingredients) {
+                // Tìm đồ uống trong cơ sở dữ liệu
+                const foundDrink = await Drink.findById(drinkId).populate('ingredients.ingredientId');
+                if (!foundDrink) {
+                    throw new Error(`Không tìm thấy đồ uống có ID ${drinkId}`);
+                }
+
+                // Trừ lượng thành phần từ kho
+                for (const { ingredientId, quantity: ingredientQuantity } of foundDrink.ingredients) {
+                    const ingredient = await Ingredient.findById(ingredientId);
+                    if (!ingredient) {
+                        throw new Error(`Không tìm thấy thành phần có ID ${ingredientId}`);
+                    }
+                    ingredient.quantity -= ingredientQuantity * quantity;
+                    await ingredient.save();
+                }
+            }
+        }
         res.status(201).json(newBill);
     } catch (error) {
         console.error('Lỗi khi tạo hóa đơn:', error);
