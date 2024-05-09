@@ -18,7 +18,8 @@ router.post('/', authenticateJWT, async (req, res) => {
   const ingredient = new Ingredient({
     name: req.body.name,
     quantity: req.body.quantity,
-    unit: req.body.unit
+    unit: req.body.unit,
+    price: req.body.price
   });
   try {
     const newIngredient = await ingredient.save();
@@ -43,6 +44,9 @@ router.patch('/:id', authenticateJWT, async (req, res) => {
     }
     if (req.body.unit != null) {
       ingredient.unit = req.body.unit;
+    }
+    if (req.body.price != null) {
+      ingredient.price = req.body.price;
     }
     const updatedIngredient = await ingredient.save();
     res.json(updatedIngredient);
