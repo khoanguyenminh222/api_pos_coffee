@@ -7,49 +7,40 @@ const Ingredient = require('../models/Ingredient');
 const authenticateJWT = require('../middleware/authenticateJWT');
 
 // Route để tạo hóa đơn mới
-router.post('/', authenticateJWT,async (req, res) => {
-    const { drinks } = req.body;
+// Route để tạo hóa đơn mới và trừ đi thành phần nguyên liệu từ kho
+router.post('/', async (req, res) => {
+    const { userId, drinks, totalAmount } = req.body;
+    
     try {
-        const newBill = new Bill(req.body);
+        // Tạo một hóa đơn mới
+        const newBill = new Bill({ userId, drinks, totalAmount });
         await newBill.save();
-        // Tạo một mảng chứa tất cả các ID của thành phần trong tất cả các đồ uống
-        const ingredientIds = drinks.reduce((acc, drink) => {
-            drink.ingredients.forEach(ingredient => {
-                if (!acc.includes(ingredient.id)) {
-                    acc.push(ingredient.id);
-                }
-            });
-            return acc;
-        }, []);
 
-        // Tìm tất cả các thành phần dựa trên ID
-        const ingredients = await Ingredient.find({ _id: { $in: ingredientIds } });
-
-        // Tạo một đối tượng Map để lưu trữ quantity của mỗi thành phần
-        const ingredientMap = new Map();
-        ingredients.forEach(ingredient => {
-            ingredientMap.set(ingredient._id.toString(), ingredient.quantity);
-        });
-
-        // Lặp qua tất cả các đồ uống và cập nhật lượng thành phần từ kho
+        // Lặp qua từng đồ uống trong danh sách hóa đơn
         for (const drink of drinks) {
-            for (const { id: drinkId, quantity } of drink.ingredients) {
-                const foundDrink = await Drink.findById(drinkId).populate('ingredients.ingredient');
-                if (!foundDrink) {
-                    throw new Error(`Không tìm thấy đồ uống có ID ${drinkId}`);
+            // Tìm đồ uống trong cơ sở dữ liệu
+            const foundDrink = await Drink.findById(drink.id);
+            if (!foundDrink) {
+                throw new Error(`Không tìm thấy đồ uống có ID ${drink.id}`);
+            }
+
+            // Lặp qua từng thành phần nguyên liệu của đồ uống và trừ đi từ kho
+            for (const ingredient of drink.ingredients) {
+                const ingredientId = ingredient.ingredient._id;
+                const ingredientQuantity = ingredient.quantity;
+
+                // Tìm nguyên liệu trong kho
+                const foundIngredient = await Ingredient.findById(ingredientId);
+                if (!foundIngredient) {
+                    throw new Error(`Không tìm thấy nguyên liệu có ID ${ingredientId}`);
                 }
 
-                foundDrink.ingredients.forEach(ingredient => {
-                    const ingredientId = ingredient.ingredient._id.toString();
-                    const ingredientQuantity = ingredient.quantity;
-                    const updatedQuantity = ingredientMap.get(ingredientId) - (ingredientQuantity * quantity);
-                    ingredientMap.set(ingredientId, updatedQuantity);
-                });
+                // Trừ đi số lượng nguyên liệu từ kho
+                foundIngredient.quantity -= ingredientQuantity;
+                await foundIngredient.save();
             }
         }
 
-        // Cập nhật lượng thành phần trong kho
-        await Promise.all(Array.from(ingredientMap.entries()).map(([id, quantity]) => Ingredient.findByIdAndUpdate(id, { quantity })));
         res.status(201).json(newBill);
     } catch (error) {
         console.error('Lỗi khi tạo hóa đơn:', error);
