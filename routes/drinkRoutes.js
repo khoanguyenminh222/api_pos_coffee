@@ -48,7 +48,7 @@ router.get("/category/:categoryId", authenticateJWT, async (req, res) => {
 router.get('/:id', authenticateJWT, async (req, res) => {
   try {
     const drink = await Drink.findById(req.params.id).populate('ingredients.ingredient');
-    if (drink == null) {
+    if (!drink) {
       return res.status(404).json({ message: 'Drink not found' });
     }
     res.json(drink);
