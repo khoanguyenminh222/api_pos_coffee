@@ -142,30 +142,30 @@ router.post('/:id/ingredients', async (req, res) => {
       }
 
       // Tạo một mảng chứa id của các thành phần có trong yêu cầu
-      const requestedIngredientIds = ingredients.map(item => item.ingredientId);
+      const requestedIngredientIds = ingredients.map(item => item._id);
 
       // Lặp qua mỗi thành phần hiện tại của đồ uống
       for (let i = drink.ingredients.length - 1; i >= 0; i--) {
           const currentIngredient = drink.ingredients[i];
-
+          
           // Kiểm tra xem thành phần hiện tại có trong yêu cầu không
-          if (!requestedIngredientIds.includes(currentIngredient.ingredient.toString())) {
+          if (!requestedIngredientIds.includes(currentIngredient._id.toString())) {
               // Nếu không, xoá thành phần đó khỏi danh sách
               drink.ingredients.splice(i, 1);
           }
       }
 
       // Lặp qua mỗi thành phần trong yêu cầu
-      for (const { ingredientId, quantity } of ingredients) {
+      for (const { _id, quantity } of ingredients) {
           // Tìm xem có tồn tại thành phần trong danh sách hiện tại của đồ uống không
-          const existingIngredient = drink.ingredients.find(item => item.ingredient.equals(ingredientId));
+          const existingIngredient = drink.ingredients.find(item => item.ingredient.equals(_id));
           if (existingIngredient) {
               // Nếu tồn tại, cập nhật số lượng mới cho thành phần
               existingIngredient.quantity = quantity; 
           } else {
               // Nếu không tồn tại, thêm mới thành phần
               drink.ingredients.push({
-                  ingredient: ingredientId,
+                  ingredient: _id,
                   quantity: quantity
               });
           }
