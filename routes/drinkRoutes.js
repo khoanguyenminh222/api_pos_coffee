@@ -135,22 +135,40 @@ router.post('/:id/ingredients', async (req, res) => {
   const { ingredients } = req.body;
 
   try {
-      // Kiểm tra xem drink có tồn tại không
+      // Kiểm tra xem đồ uống có tồn tại không
       const drink = await Drink.findById(id);
       if (!drink) {
           return res.status(404).json({ message: 'Không tìm thấy đồ uống' });
       }
 
-      // Lặp qua mỗi đối tượng trong mảng ingredients
-      for (const { ingredientId, quantity } of ingredients) {
-          // Tạo một object chứa thông tin của thành phần mới
-          const newIngredient = {
-              ingredient: ingredientId,
-              quantity: quantity || 1 // Nếu không có quantity được cung cấp, sử dụng giá trị mặc định là 1
-          };
+      // Tạo một mảng chứa id của các thành phần có trong yêu cầu
+      const requestedIngredientIds = ingredients.map(item => item.ingredientId);
 
-          // Thêm thành phần vào mảng ingredients của drink
-          drink.ingredients.push(newIngredient);
+      // Lặp qua mỗi thành phần hiện tại của đồ uống
+      for (let i = drink.ingredients.length - 1; i >= 0; i--) {
+          const currentIngredient = drink.ingredients[i];
+
+          // Kiểm tra xem thành phần hiện tại có trong yêu cầu không
+          if (!requestedIngredientIds.includes(currentIngredient.ingredient.toString())) {
+              // Nếu không, xoá thành phần đó khỏi danh sách
+              drink.ingredients.splice(i, 1);
+          }
+      }
+
+      // Lặp qua mỗi thành phần trong yêu cầu
+      for (const { ingredientId, quantity } of ingredients) {
+          // Tìm xem có tồn tại thành phần trong danh sách hiện tại của đồ uống không
+          const existingIngredient = drink.ingredients.find(item => item.ingredient.equals(ingredientId));
+          if (existingIngredient) {
+              // Nếu tồn tại, cập nhật số lượng mới cho thành phần
+              existingIngredient.quantity = quantity; 
+          } else {
+              // Nếu không tồn tại, thêm mới thành phần
+              drink.ingredients.push({
+                  ingredient: ingredientId,
+                  quantity: quantity
+              });
+          }
       }
 
       // Lưu drink đã được cập nhật vào cơ sở dữ liệu
@@ -162,5 +180,6 @@ router.post('/:id/ingredients', async (req, res) => {
       res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
   }
 });
+
 
 module.exports = router;
