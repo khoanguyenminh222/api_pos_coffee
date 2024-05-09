@@ -25,8 +25,14 @@ const DrinkSchema = new mongoose.Schema({
     required: true
   },
   ingredients: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Ingredient' // Tham chiếu đến collection của thành phần
+    ingredient: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Ingredient' // Tham chiếu đến collection của thành phần
+    },
+    quantity: {
+      type: Number,
+      default: 1 // Số lượng mặc định
+    }
   }],
   options: {
     temperature: {

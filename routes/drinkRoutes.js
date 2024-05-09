@@ -130,4 +130,37 @@ router.delete('/:id', authenticateJWT, async (req, res) => {
   }
 });
 
+router.post('/:id/ingredients', async (req, res) => {
+  const { id } = req.params;
+  const { ingredients } = req.body;
+
+  try {
+      // Kiểm tra xem drink có tồn tại không
+      const drink = await Drink.findById(id);
+      if (!drink) {
+          return res.status(404).json({ message: 'Không tìm thấy đồ uống' });
+      }
+
+      // Lặp qua mỗi đối tượng trong mảng ingredients
+      for (const { ingredientId, quantity } of ingredients) {
+          // Tạo một object chứa thông tin của thành phần mới
+          const newIngredient = {
+              ingredient: ingredientId,
+              quantity: quantity || 1 // Nếu không có quantity được cung cấp, sử dụng giá trị mặc định là 1
+          };
+
+          // Thêm thành phần vào mảng ingredients của drink
+          drink.ingredients.push(newIngredient);
+      }
+
+      // Lưu drink đã được cập nhật vào cơ sở dữ liệu
+      await drink.save();
+
+      res.status(201).json({ message: 'Thành công', drink });
+  } catch (error) {
+      console.error('Lỗi khi thêm ingredients vào drink:', error);
+      res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
+  }
+});
+
 module.exports = router;
