@@ -54,12 +54,11 @@ router.patch('/:id', authenticateJWT, async (req, res) => {
 // Route để xoá một thành phần
 router.delete('/:id', authenticateJWT, async (req, res) => {
   try {
-    const ingredient = await Ingredient.findById(req.params.id);
+    const ingredient = await Ingredient.findOneAndDelete(req.params.id);
     if (ingredient == null) {
       return res.status(404).json({ message: 'Cannot find ingredient' });
     }
-    await ingredient.remove();
-    res.json({ message: 'Deleted ingredient' });
+    res.status(201).json({ message: 'Deleted ingredient' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
