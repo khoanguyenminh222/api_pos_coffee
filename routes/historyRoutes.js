@@ -120,8 +120,9 @@ router.get('/:period/:userId?', authenticateJWT, async (req, res) => {
             .select('userId totalAmount createdAt') // Chọn các trường cần thiết
             .limit(pageSize * 1)
             .skip((page - 1) * pageSize)
-            .exec();
-
+            .sort({ createdAt: 'desc' })
+            .exec()
+            
         res.json({
             totalAmountSum: totalAmountSum.length ? totalAmountSum[0].totalAmount : 0,
             totalPages: Math.ceil(totalCount / pageSize),

@@ -4,6 +4,7 @@ const router = express.Router();
 const Bill = require('../models/Bill');
 const Drink = require('../models/Drink');
 const Ingredient = require('../models/Ingredient');
+const TransactionIngredient = require('../models/TransactionIngredient');
 const authenticateJWT = require('../middleware/authenticateJWT');
 
 // Route để tạo hóa đơn mới
@@ -23,7 +24,6 @@ router.post('/', async (req, res) => {
             if (!foundDrink) {
                 throw new Error(`Không tìm thấy đồ uống có ID ${drink.id}`);
             }
-
             // Lặp qua từng thành phần nguyên liệu của đồ uống và trừ đi từ kho
             for (const ingredient of drink.ingredients) {
                 const ingredientId = ingredient.ingredient._id;
@@ -35,8 +35,18 @@ router.post('/', async (req, res) => {
                     throw new Error(`Không tìm thấy nguyên liệu có ID ${ingredientId}`);
                 }
 
+                const newTransaction = new TransactionIngredient({
+                    drink: drink.id,
+                    ingredient: ingredient.ingredient._id,
+                    quantity_transaction: ingredient.quantity*drink.quantity,
+                    quantity_prevTransaction: foundIngredient.quantity, // Điều này cần được truyền từ client
+                    priceOfUnit: foundIngredient.priceOfUnit,
+                    price: (ingredient.quantity*foundIngredient.priceOfUnit*drink.quantity).toFixed(2)
+                });
+                await newTransaction.save();
+
                 // Trừ đi số lượng nguyên liệu từ kho
-                foundIngredient.quantity -= ingredientQuantity;
+                foundIngredient.quantity -= ingredientQuantity*drink.quantity;
                 await foundIngredient.save();
             }
         }
@@ -79,7 +89,7 @@ router.put('/:id', authenticateJWT, async (req, res) => {
 // Route để lấy một hóa đơn bằng ID
 router.get('/:id', authenticateJWT, async (req, res) => {
     try {
-        const bill = await Bill.findById(req.params.id);
+        const bill = await Bill.findById(req.params.id).populate('drinks.id');
         if (!bill) {
             return res.status(404).json({ message: 'Không tìm thấy hóa đơn' });
         }

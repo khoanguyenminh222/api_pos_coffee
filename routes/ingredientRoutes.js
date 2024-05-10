@@ -19,13 +19,15 @@ router.post('/', authenticateJWT, async (req, res) => {
     name: req.body.name,
     quantity: req.body.quantity,
     unit: req.body.unit,
-    price: req.body.price
+    priceOfUnit: (req.body.totalPrice / req.body.quantity).toFixed(2),
+    totalPrice: req.body.totalPrice
   });
   try {
     const newIngredient = await ingredient.save();
     res.status(201).json(newIngredient);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.log(err)
+    res.status(400).json({ message: err });
   }
 });
 
@@ -45,8 +47,9 @@ router.patch('/:id', authenticateJWT, async (req, res) => {
     if (req.body.unit != null) {
       ingredient.unit = req.body.unit;
     }
-    if (req.body.price != null) {
-      ingredient.price = req.body.price;
+    if (req.body.totalPrice != null) {
+      ingredient.priceOfUnit = (req.body.totalPrice / req.body.quantity).toFixed(2);
+      ingredient.totalPrice = req.body.totalPrice;
     }
     const updatedIngredient = await ingredient.save();
     res.json(updatedIngredient);
