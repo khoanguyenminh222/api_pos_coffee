@@ -22,8 +22,15 @@ function getMonth(date) {
 
 // Hàm lấy năm của một ngày cụ thể
 function getYear(date) {
-    const startOfYear = new Date(date.getFullYear(), 0, 1);
-    const endOfYear = new Date(date.getFullYear(), 11, 31);
+    const startOfYear = new Date(date);
+    startOfYear.setMonth(0); // Tháng 0 là tháng 1
+    startOfYear.setDate(1); // Ngày 1
+    startOfYear.setHours(0, 0, 0, 0); // Đặt giờ, phút, giây và mili giây thành 0
+
+    const endOfYear = new Date(date);
+    endOfYear.setMonth(11); // Tháng 11 là tháng 12
+    endOfYear.setDate(31); // Ngày 31
+    endOfYear.setHours(23, 59, 59, 999); // Đặt giờ, phút, giây và mili giây gần cuối ngày
     return { start: startOfYear, end: endOfYear };
 }
 // GET transaction history with pagination and total amount
@@ -75,24 +82,44 @@ router.get('/:period/:userId?', authenticateJWT, async (req, res) => {
                         ...userQuery,
                         ...billCodeQuery
                     });
-                    // Get total amount of transactions
-                    const totalAmountSum = await Bill.aggregate([
-                        { $match: { ...userQuery, ...billCodeQuery } }, // Thêm điều kiện tìm kiếm mã hóa đơn nếu có
-                        { $group: { _id: null, totalAmount: { $sum: "$totalAmount" } } }
-                    ]);
+                    let totalTotalAmount = 0;
+                    let currentPage = 1;
+                    let totalPages = 1;
+                    // Lặp qua từng trang để tính tổng tổng
+                    while (currentPage <= totalPages) {
+                        const billsOnPage = await Bill.find({ ...userQuery, ...billCodeQuery})
+                            .populate('userId')
+                            .skip((currentPage - 1) * pageSize)
+                            .limit(pageSize)
+                            .sort({ createdAt: 'desc' })
+                            .exec();
+
+                        // Tính tổng totalAmount trên trang hiện tại và cộng vào tổng tổng
+                        let totalAmountOnPage = 0;
+                        billsOnPage.forEach(bill => {
+                            totalAmountOnPage += bill.totalAmount;
+                        });
+
+                        totalTotalAmount += totalAmountOnPage;
+
+                        // Cập nhật số trang và lặp lại nếu còn trang tiếp theo
+                        currentPage++;
+                        totalPages = Math.ceil(await Bill.countDocuments({ ...userQuery, ...billCodeQuery }) / pageSize);
+                    }
 
                     // Get transaction history with pagination
                     const bills = await Bill.find({ ...userQuery, ...billCodeQuery })
                         .populate('userId') // Thêm tham chiếu tới User model để lấy thông tin về fullname của người dùng
                         .limit(pageSize * 1)
                         .skip((page - 1) * pageSize)
+                        .sort({ createdAt: 'desc' })
                         .exec();
-                    console.log("bill",bills)
+
                     return res.json({
-                        totalAmountSum: totalAmountSum.length ? totalAmountSum[0].totalAmount : 0,
+                        totalAmountSum: totalTotalAmount,
                         totalPages: Math.ceil(totalCount / pageSize),
                         currentPage: page,
-                        transactions: bills
+                        transactions: bills,
                     });// Dừng việc thực thi tiếp tục của hàm sau khi đã gửi phản hồi
                 } catch (err) {
                     res.status(500).json({ message: err.message });
@@ -107,24 +134,44 @@ router.get('/:period/:userId?', authenticateJWT, async (req, res) => {
             ...billCodeQuery,
             createdAt: dateQuery
         });
-        // Get total amount of transactions
-        const totalAmountSum = await Bill.aggregate([
-            { $match: { ...userQuery, ...billCodeQuery, createdAt: dateQuery } },
-            { $group: { _id: null, totalAmount: { $sum: "$totalAmount" } } }
-        ]);
+        let totalTotalAmount = 0;
+        let currentPage = 1;
+        let totalPages = 1;
 
+        // Lặp qua từng trang để tính tổng tổng
+        while (currentPage <= totalPages) {
+            const billsOnPage = await Bill.find({ ...userQuery, ...billCodeQuery, createdAt: dateQuery })
+                .populate('userId')
+                .skip((currentPage - 1) * pageSize)
+                .limit(pageSize)
+                .sort({ createdAt: 'desc' })
+                .exec();
+
+            // Tính tổng totalAmount trên trang hiện tại và cộng vào tổng tổng
+            let totalAmountOnPage = 0;
+            billsOnPage.forEach(bill => {
+                totalAmountOnPage += bill.totalAmount;
+            });
+
+            totalTotalAmount += totalAmountOnPage;
+
+            // Cập nhật số trang và lặp lại nếu còn trang tiếp theo
+            currentPage++;
+            totalPages = Math.ceil(await Bill.countDocuments({ ...userQuery, ...billCodeQuery, createdAt: dateQuery }) / pageSize);
+        }
         // Get transaction history with pagination
         const bills = await Bill.find({ ...userQuery, ...billCodeQuery, createdAt: dateQuery })
             .populate('userId') // Thêm tham chiếu tới User model để lấy thông tin về fullname của người dùng
             .skip((page - 1) * pageSize)
+            .limit(pageSize)
             .sort({ createdAt: 'desc' })
             .exec()
-            
+        
         res.json({
-            totalAmountSum: totalAmountSum.length ? totalAmountSum[0].totalAmount : 0,
+            totalAmountSum: totalTotalAmount,
             totalPages: Math.ceil(totalCount / pageSize),
             currentPage: page,
-            transactions: bills
+            transactions: bills,
         });
     } catch (err) {
         res.status(500).json({ message: err.message });

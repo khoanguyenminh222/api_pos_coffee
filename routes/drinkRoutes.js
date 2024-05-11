@@ -29,7 +29,15 @@ const upload = multer({ storage: storage });
 
 router.get('/', authenticateJWT, async (req, res) => {
   try {
-    const drinks = await Drink.find();
+    let {search} = req.query
+    let query = {}; // Tạo một object query trống để lọc
+
+    // Nếu có tham số tìm kiếm, thêm điều kiện vào query
+    if (search) {
+      // Sử dụng RegExp để tạo một biểu thức chính quy từ giá trị tìm kiếm, thêm 'i' để tìm kiếm không phân biệt chữ hoa thường
+      query = { name: { $regex: search, $options: 'i' } }
+    }
+    const drinks = await Drink.find(query);
     res.json(drinks);
   } catch (err) {
     res.status(500).json({ message: err.message });

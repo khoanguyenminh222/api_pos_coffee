@@ -1,7 +1,76 @@
 const express = require('express');
 const router = express.Router();
+const moment = require('moment');
 const Bill = require('../models/Bill');
 const authenticateJWT = require('../middleware/authenticateJWT');
+
+// Route để lấy doanh thu theo tháng
+router.get('/revenue', async (req, res) => {
+    try {
+      // Lấy tháng và năm từ query params (nếu có)
+      const { month, year } = req.query;
+  
+      // Xác định khoảng thời gian cho một tháng cụ thể
+      const startDate = moment(`${year}-${month}-01`).startOf('month');
+      const endDate = moment(startDate).endOf('month');
+  
+      // Tính tổng doanh thu cho tháng này
+      const totalRevenue = await Bill.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate.toDate(), $lte: endDate.toDate() }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$totalAmount" }
+          }
+        }
+      ]);
+  
+      res.json(totalRevenue[0] ? totalRevenue[0].total : 0);
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+    }
+  });
+
+// Route để lấy chi phí theo tháng
+router.get('/expenses', async (req, res) => {
+    try {
+      // Lấy tháng và năm từ query params (nếu có)
+      const { month, year } = req.query;
+  
+      // Xác định khoảng thời gian cho một tháng cụ thể
+      const startDate = moment(`${year}-${month}-01`).startOf('month');
+      const endDate = moment(startDate).endOf('month');
+  
+      // Tính tổng chi phí cho tháng này
+      const totalExpenses = await IngredientExpense.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate.toDate(), $lte: endDate.toDate() }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$totalAmount" }
+          }
+        }
+      ]);
+  
+      res.json(totalExpenses[0] ? totalExpenses[0].total : 0);
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+    }
+  });
+
+
+
+
 
 function getWeek(date) {
     const startOfWeek = new Date(date);
@@ -145,6 +214,53 @@ router.get('/revenue/:period', authenticateJWT, async (req, res) => {
         res.json(revenueByPeriod);
     } catch (err) {
         res.status(500).json({ message: err.message });
+    }
+});
+
+router.get('/expense/:period', async (req, res) => {
+    const period = req.params.period;
+    let dateQuery = {};
+
+    // Kiểm tra xem ngày có được cung cấp trong phần thân của yêu cầu không
+    const dateFromBody = req.query.date ? new Date(req.query.date) : new Date(); // Sử dụng ngày hiện tại nếu không có ngày được cung cấp
+
+    try {
+        switch (period) {
+            case "day":
+                const startOfDay = new Date(dateFromBody.getFullYear(), dateFromBody.getMonth(), dateFromBody.getDate(), 0, 0, 0);
+                const endOfDay = new Date(dateFromBody.getFullYear(), dateFromBody.getMonth(), dateFromBody.getDate(), 23, 59, 59);
+                dateQuery = { $gte: startOfDay, $lte: endOfDay };
+                break;
+            case "week":
+                const weekToQuery = getWeek(dateFromBody);
+                dateQuery = { $gte: weekToQuery.start, $lte: weekToQuery.end };
+                break;
+            case "month":
+                const monthToQuery = getMonth(dateFromBody);
+                dateQuery = { $gte: monthToQuery.start, $lte: monthToQuery.end };
+                break;
+            case "year":
+                const yearToQuery = getYear(dateFromBody);
+                dateQuery = { $gte: yearToQuery.start, $lte: yearToQuery.end };
+                break;
+            default:
+                return res.status(400).json({ message: "Invalid period" });
+        }
+
+        // Sử dụng aggregate để tính tổng totalAmount
+        const totalExpense = await IngredientExpense.aggregate([
+            { $match: { createdAt: dateQuery } }, // Lọc theo ngày/tuần/tháng/năm
+            { $group: { _id: null, totalExpense: { $sum: "$totalAmount" } } }
+        ]);
+
+        // Trả về kết quả
+        if (totalExpense.length > 0) {
+            res.json({ totalExpense: totalExpense[0].totalExpense });
+        } else {
+            res.json({ totalExpense: 0 });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 });
 
