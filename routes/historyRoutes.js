@@ -48,7 +48,7 @@ router.get('/:period/:userId?', authenticateJWT, async (req, res) => {
         let billCodeQuery = {}; // Điều kiện tìm kiếm cho mã hóa đơn
 
         if (billCode) {
-            billCodeQuery = { _id: billCode }; // Tìm theo mã hóa đơn nếu có
+            billCodeQuery = { billCode: billCode }; // Tìm theo mã hóa đơn nếu có
         }
         switch (period) {
             case 'day':
@@ -84,7 +84,6 @@ router.get('/:period/:userId?', authenticateJWT, async (req, res) => {
                     // Get transaction history with pagination
                     const bills = await Bill.find({ ...userQuery, ...billCodeQuery })
                         .populate('userId', 'fullname') // Thêm tham chiếu tới User model để lấy thông tin về fullname của người dùng
-                        .select('userId totalAmount createdAt') // Chọn các trường cần thiết
                         .limit(pageSize * 1)
                         .skip((page - 1) * pageSize)
                         .exec();

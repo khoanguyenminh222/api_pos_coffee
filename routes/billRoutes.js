@@ -13,8 +13,13 @@ router.post('/', async (req, res) => {
     const { userId, drinks, totalAmount } = req.body;
     
     try {
+        // Lấy ngày giờ hiện tại
+        const currentDate = new Date();
+
+        // Tạo mã hóa đơn
+        const billCode = await generateBillCode(currentDate);
         // Tạo một hóa đơn mới
-        const newBill = new Bill({ userId, drinks, totalAmount });
+        const newBill = new Bill({ billCode, userId, drinks, totalAmount });
         await newBill.save();
 
         // Lặp qua từng đồ uống trong danh sách hóa đơn
@@ -57,6 +62,24 @@ router.post('/', async (req, res) => {
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
     }
 });
+
+// Hàm tạo mã hóa đơn
+async function generateBillCode(currentDate) {
+    const year = currentDate.getFullYear();
+    const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+    const date = currentDate.getDate().toString().padStart(2, '0');
+    const hours = currentDate.getHours().toString().padStart(2, '0');
+    const minutes = currentDate.getMinutes().toString().padStart(2, '0');
+    const seconds = currentDate.getSeconds().toString().padStart(2, '0');
+
+    // Tìm số thứ tự của hóa đơn trong ngày hiện tại
+    const currentDay = year + month + date;
+    const count = await Bill.countDocuments({ billCode: { $regex: new RegExp(`^${currentDay}`, 'i') } }) + 1;
+
+    // Xây dựng mã hóa đơn
+    const billCode = `${year}${month}${date}${hours}${minutes}${seconds}-${count}`;
+    return billCode;
+}
 
 // Route để xoá hóa đơn
 router.delete('/:id', authenticateJWT, async (req, res) => {

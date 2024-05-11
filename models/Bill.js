@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
 const BillSchema = new mongoose.Schema({
+    billCode:{
+        type: String,
+        required: true
+    },
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User', // Tham chiếu đến schema của người dùng

@@ -29,5 +29,4 @@ const TransactionIngredientSchema = new mongoose.Schema({
   }
 },{ timestamps: true }
 );
-TransactionIngredientSchema.index({ 'ingredient.name': 'text' });
 module.exports = mongoose.model('TransactionIngredient', TransactionIngredientSchema);
