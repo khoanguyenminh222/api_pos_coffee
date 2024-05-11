@@ -2,16 +2,88 @@ const express = require('express');
 const router = express.Router();
 const authenticateJWT = require('../middleware/authenticateJWT');
 const TransactionIngredient = require('../models/TransactionIngredient');
+const Ingredient = require('../models/Ingredient')
 
+function getStartEndDate(date, period) {
+    let startDate, endDate;
+    switch (period) {
+        case 'day':
+            startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
+            endDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+            break;
+        case 'week':
+            startDate = new Date(date);
+            startDate.setDate(startDate.getDate() - startDate.getDay()); // Move to the beginning of the week (Sunday)
+            startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + 6); // Move to the end of the week (Saturday)
+            endDate.setHours(23, 59, 59, 999);
+            break;
+        case 'month':
+            startDate = new Date(date.getFullYear(), date.getMonth(), 1);
+            endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+            break;
+        case 'year':
+            startDate = new Date(date.getFullYear(), 0, 1);
+            endDate = new Date(date.getFullYear(), 11, 31);
+            break;
+        default:
+            // Default to current day
+            startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
+            endDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+            break;
+    }
+    return { startDate, endDate };
+}
 // Route để lấy tất cả các giao dịch nguyên liệu
-router.get('/', authenticateJWT, async (req, res) => {
+router.get('/:period', authenticateJWT, async (req, res) => {
     try {
-        const transactions = await TransactionIngredient.find().populate('drink').populate('ingredient').sort({ createdAt: 'desc' });
-        // Tính tổng giá trị của tất cả các giao dịch
-        const totalPrices = transactions.reduce((total, transaction) => {
-            return total + transaction.price;
-        }, 0);
-        res.json({ transactions, totalPrices });
+        console.log(req.query)
+        let { period } = req.params;
+        let { date, page, pageSize, search } = req.query;
+        let currentDate = date ? new Date(date) : new Date(); // Sử dụng ngày được cung cấp, nếu không thì mặc định là ngày hiện tại
+
+        let { startDate, endDate } = getStartEndDate(currentDate, period);
+
+        let query = {
+            createdAt: { $gte: startDate, $lte: endDate }
+        };
+        if (search) {
+            const ingredients = await Ingredient.find({
+                name: { $regex: new RegExp(search, 'i') }
+            });
+            const ingredientIds = ingredients.map(ingredient => ingredient._id);
+            query.ingredient = { $in: ingredientIds };
+        }
+        
+        const totalCount = await TransactionIngredient.countDocuments(query);
+
+        // Phân trang
+        const currentPage = parseInt(page) || 1;
+        const limit = parseInt(pageSize) || 10; // Số lượng giao dịch trên mỗi trang, mặc định là 10
+        const skip = (currentPage - 1) * limit;
+
+        const transactions = await TransactionIngredient.find(query)
+            .populate('drink')
+            .populate('ingredient')
+            .sort({ createdAt: 'desc' })
+            .limit(limit)
+            .skip(skip);
+        console.log(transactions)
+         // Tính tổng giá trị của tất cả các giao dịch
+         const totalPrices = await TransactionIngredient.aggregate([
+            { $match: query },
+            { $group: { _id: null, totalPrice: { $sum: "$price" } } }
+        ]);
+
+        const totalPrice = totalPrices.length > 0 ? totalPrices[0].totalPrice : 0;
+        console.log(totalCount)
+        res.json({
+            transactions,
+            totalPrices: totalPrice,
+            currentPage,
+            totalPages: Math.ceil(totalCount / limit),
+        });
     } catch (error) {
         console.error('Lỗi khi lấy thông tin giao dịch:', error);
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });

@@ -17,6 +17,7 @@ const reportRoutes = require("./routes/reportRoutes");
 const historyRoutes = require("./routes/historyRoutes");
 const ingredientRoutes = require("./routes/ingredientRoutes");
 const transactionIngredientRoutes = require("./routes/transactionIngredientRoutes");
+const ingredientExpenseRoutes = require("./routes/ingredientExpenseRoutes");
 
 require('dotenv/config')
 
@@ -52,6 +53,7 @@ app.use("/api/report", reportRoutes);
 app.use("/api/history", historyRoutes);
 app.use("/api/ingredient", ingredientRoutes);
 app.use("/api/transactionIngredient", transactionIngredientRoutes);
+app.use("/api/ingredientExpense", ingredientExpenseRoutes);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
