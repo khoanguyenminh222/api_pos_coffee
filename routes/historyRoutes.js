@@ -83,11 +83,11 @@ router.get('/:period/:userId?', authenticateJWT, async (req, res) => {
 
                     // Get transaction history with pagination
                     const bills = await Bill.find({ ...userQuery, ...billCodeQuery })
-                        .populate('userId', 'fullname') // Thêm tham chiếu tới User model để lấy thông tin về fullname của người dùng
+                        .populate('userId') // Thêm tham chiếu tới User model để lấy thông tin về fullname của người dùng
                         .limit(pageSize * 1)
                         .skip((page - 1) * pageSize)
                         .exec();
-
+                    console.log("bill",bills)
                     return res.json({
                         totalAmountSum: totalAmountSum.length ? totalAmountSum[0].totalAmount : 0,
                         totalPages: Math.ceil(totalCount / pageSize),
@@ -115,9 +115,7 @@ router.get('/:period/:userId?', authenticateJWT, async (req, res) => {
 
         // Get transaction history with pagination
         const bills = await Bill.find({ ...userQuery, ...billCodeQuery, createdAt: dateQuery })
-            .populate('userId', 'fullname') // Thêm tham chiếu tới User model để lấy thông tin về fullname của người dùng
-            .select('userId totalAmount createdAt') // Chọn các trường cần thiết
-            .limit(pageSize * 1)
+            .populate('userId') // Thêm tham chiếu tới User model để lấy thông tin về fullname của người dùng
             .skip((page - 1) * pageSize)
             .sort({ createdAt: 'desc' })
             .exec()

@@ -69,7 +69,7 @@ router.get('/:period', authenticateJWT, async (req, res) => {
             .sort({ createdAt: 'desc' })
             .limit(limit)
             .skip(skip);
-        console.log(transactions)
+
          // Tính tổng giá trị của tất cả các giao dịch
          const totalPrices = await TransactionIngredient.aggregate([
             { $match: query },
@@ -77,7 +77,7 @@ router.get('/:period', authenticateJWT, async (req, res) => {
         ]);
 
         const totalPrice = totalPrices.length > 0 ? totalPrices[0].totalPrice : 0;
-        console.log(totalCount)
+
         res.json({
             transactions,
             totalPrices: totalPrice,
