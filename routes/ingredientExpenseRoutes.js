@@ -36,19 +36,20 @@ function getStartEndDate(date, period) {
     return { startDate, endDate };
 }
 // Lấy tất cả các giao dịch chi tiêu nguyên liệu
-router.get('/:period?', authenticateJWT, async (req, res) => {
+router.get('/:period', authenticateJWT, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1; // Default page is 1 if page parameter is not provided
         const pageSize = parseInt(req.query.pageSize) || 10; // Default page size is 10 if pageSize parameter is not provided
         const period = req.params.period || 'day'; // Default period is 'day' if period parameter is not provided
         const date = req.query.date ? new Date(req.query.date) : new Date(); // Default to current date if date parameter is not provided
 
-        const { startDate, endDate } = getStartEndDate(date, period);
+        let query = {};
 
-        const query = {
-            createdAt: { $gte: startDate, $lte: endDate }
-        };
-        let search = req.query;
+        if (period !== 'all') {
+            const { startDate, endDate } = getStartEndDate(date, period);
+            query.createdAt = { $gte: startDate, $lte: endDate };
+        }
+        let {search} = req.query;
         if (search) {
             const ingredients = await Ingredient.find({
                 name: { $regex: new RegExp(search, 'i') }
@@ -64,6 +65,7 @@ router.get('/:period?', authenticateJWT, async (req, res) => {
             { $match: query },
             { $group: { _id: null, totalAmount: { $sum: "$totalAmount" } } }
         ]);
+        const totalAmountSums = totalAmountSum.length > 0 ? totalAmountSum[0].totalAmount : 0;
 
         // Get ingredient expenses with pagination
         const expenses = await IngredientExpense.find(query)
@@ -73,7 +75,7 @@ router.get('/:period?', authenticateJWT, async (req, res) => {
             .sort({ createdAt: 'desc' });
 
         res.json({
-            totalAmount: totalAmountSum.length ? totalAmountSum[0].totalAmount : 0,
+            totalAmount: totalAmountSums,
             totalPages: Math.ceil(totalCount / pageSize),
             currentPage: page,
             expenses,

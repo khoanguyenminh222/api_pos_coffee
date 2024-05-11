@@ -43,11 +43,13 @@ router.get('/:period', authenticateJWT, async (req, res) => {
         let { date, page, pageSize, search } = req.query;
         let currentDate = date ? new Date(date) : new Date(); // Sử dụng ngày được cung cấp, nếu không thì mặc định là ngày hiện tại
 
-        let { startDate, endDate } = getStartEndDate(currentDate, period);
+        let query = {};
 
-        let query = {
-            createdAt: { $gte: startDate, $lte: endDate }
-        };
+        if (period !== 'all') {
+            const { startDate, endDate } = getStartEndDate(date, period);
+            query.createdAt = { $gte: startDate, $lte: endDate };
+        }
+        
         if (search) {
             const ingredients = await Ingredient.find({
                 name: { $regex: new RegExp(search, 'i') }
