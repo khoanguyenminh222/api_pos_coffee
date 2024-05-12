@@ -2,71 +2,76 @@ const express = require('express');
 const router = express.Router();
 const moment = require('moment');
 const Bill = require('../models/Bill');
+
 const authenticateJWT = require('../middleware/authenticateJWT');
+const IngredientExpense = require('../models/IngredientExpense');
 
-// Route để lấy doanh thu theo tháng
-router.get('/revenue', async (req, res) => {
+// API endpoint để lấy dữ liệu doanh thu và chi phí cho mỗi tháng
+router.get('/monthly/:date', authenticateJWT, async (req, res) => {
     try {
-      // Lấy tháng và năm từ query params (nếu có)
-      const { month, year } = req.query;
-  
-      // Xác định khoảng thời gian cho một tháng cụ thể
-      const startDate = moment(`${year}-${month}-01`).startOf('month');
-      const endDate = moment(startDate).endOf('month');
-  
-      // Tính tổng doanh thu cho tháng này
-      const totalRevenue = await Bill.aggregate([
-        {
-          $match: {
-            createdAt: { $gte: startDate.toDate(), $lte: endDate.toDate() }
-          }
-        },
-        {
-          $group: {
-            _id: null,
-            total: { $sum: "$totalAmount" }
-          }
-        }
-      ]);
-  
-      res.json(totalRevenue[0] ? totalRevenue[0].total : 0);
-    } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server Error');
-    }
-  });
+        const date = new Date(req.params.date); // Chuyển đổi ngày từ tham số trong URL thành đối tượng Date
+        const year = date.getFullYear();
 
-// Route để lấy chi phí theo tháng
-router.get('/expenses', async (req, res) => {
-    try {
-      // Lấy tháng và năm từ query params (nếu có)
-      const { month, year } = req.query;
-  
-      // Xác định khoảng thời gian cho một tháng cụ thể
-      const startDate = moment(`${year}-${month}-01`).startOf('month');
-      const endDate = moment(startDate).endOf('month');
-  
-      // Tính tổng chi phí cho tháng này
-      const totalExpenses = await IngredientExpense.aggregate([
-        {
-          $match: {
-            createdAt: { $gte: startDate.toDate(), $lte: endDate.toDate() }
-          }
-        },
-        {
-          $group: {
-            _id: null,
-            total: { $sum: "$totalAmount" }
-          }
-        }
-      ]);
-  
-      res.json(totalExpenses[0] ? totalExpenses[0].total : 0);
-    } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server Error');
+        // Truy vấn dữ liệu doanh thu từ bảng Bill
+        const revenueData = await Bill.aggregate([
+            {
+                $match: {
+                    createdAt: {
+                        $gte: new Date(year, 0), // Bắt đầu từ ngày đầu tiên của năm
+                        $lt: new Date(year + 1, 0) // Kết thúc trước ngày đầu tiên của năm tiếp theo
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $month: '$createdAt' },
+                    totalRevenue: { $sum: '$totalAmount' }
+                }
+            }
+        ]);
+
+        // Truy vấn dữ liệu chi phí từ bảng IngredientExpense
+        const expensesData = await IngredientExpense.aggregate([
+            {
+                $match: {
+                    createdAt: {
+                        $gte: new Date(year, 0), // Bắt đầu từ ngày đầu tiên của năm
+                        $lt: new Date(year + 1, 0) // Kết thúc trước ngày đầu tiên của năm tiếp theo
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $month: '$createdAt' },
+                    totalExpenses: { $sum: '$totalAmount' }
+                }
+            }
+        ]);
+
+        // Tạo mảng 12 tháng với giá trị mặc định là 0
+        const monthlyData = Array.from({ length: 12 }, (_, i) => {
+            return { month: i + 1, revenue: 0, expenses: 0 };
+        });
+
+        // Cập nhật dữ liệu doanh thu cho từng tháng
+        revenueData.forEach(item => {
+            const monthIndex = item._id - 1;
+            monthlyData[monthIndex].revenue = item.totalRevenue;
+        });
+
+        // Cập nhật dữ liệu chi phí cho từng tháng
+        expensesData.forEach(item => {
+            const monthIndex = item._id - 1;
+            monthlyData[monthIndex].expenses = item.totalExpenses;
+        });
+
+        // Trả về dữ liệu dưới dạng JSON
+        res.json(monthlyData);
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: 'Lỗi server' });
     }
-  });
+});
 
 
 
