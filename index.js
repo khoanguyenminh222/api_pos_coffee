@@ -18,6 +18,7 @@ const historyRoutes = require("./routes/historyRoutes");
 const ingredientRoutes = require("./routes/ingredientRoutes");
 const transactionIngredientRoutes = require("./routes/transactionIngredientRoutes");
 const ingredientExpenseRoutes = require("./routes/ingredientExpenseRoutes");
+const promotionRoutes = require("./routes/promotionRoutes");
 
 require('dotenv/config')
 
@@ -54,6 +55,7 @@ app.use("/api/history", historyRoutes);
 app.use("/api/ingredient", ingredientRoutes);
 app.use("/api/transactionIngredient", transactionIngredientRoutes);
 app.use("/api/ingredientExpense", ingredientExpenseRoutes);
+app.use("/api/promotions", promotionRoutes);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {

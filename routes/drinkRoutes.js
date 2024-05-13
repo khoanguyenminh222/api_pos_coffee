@@ -53,6 +53,20 @@ router.get("/category/:categoryId", authenticateJWT, async (req, res) => {
   }
 });
 
+router.post('/:drinkId/promotions', async (req, res) => {
+  try {
+    const drink = await Drink.findById(req.params.drinkId);
+    if (!drink) {
+      return res.status(404).json({ message: 'Drink not found' });
+    }
+    drink.promotion = req.body.promotionId;
+    await drink.save();
+    res.status(201).json(drink);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.get('/:id', authenticateJWT, async (req, res) => {
   try {
     const drink = await Drink.findById(req.params.id).populate('ingredients.ingredient');
