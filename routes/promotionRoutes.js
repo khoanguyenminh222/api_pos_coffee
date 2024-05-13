@@ -1,10 +1,11 @@
 // Import các thư viện cần thiết và Promotion model
 const express = require('express');
 const router = express.Router();
+const authenticateJWT = require('../middleware/authenticateJWT');
 const Promotion = require('../models/Promotion');
 
 // API endpoint để lấy tất cả các Promotion
-router.get('/', async (req, res) => {
+router.get('/', authenticateJWT, async (req, res) => {
     try {
         const promotions = await Promotion.find();
         res.json(promotions);
@@ -14,7 +15,7 @@ router.get('/', async (req, res) => {
 });
 
 // API endpoint để thêm một Promotion mới
-router.post('/', async (req, res) => {
+router.post('/', authenticateJWT, async (req, res) => {
     try {
         // Extract promotion details from request body
         const { name, description, type, buyItems, freeItem, discountPercent, fixedPriceItems, buyCategoryItems, freeCategoryItems, startDate, endDate, isActive } = req.body;
@@ -83,7 +84,7 @@ router.post('/', async (req, res) => {
 });
 
 // API endpoint để sửa thông tin một Promotion
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticateJWT, async (req, res) => {
     try {
         let updatedPromotion = await Promotion.findByIdAndUpdate(req.params.id, req.body, { new: true });
         res.json(updatedPromotion);
@@ -93,7 +94,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // API endpoint để xoá một Promotion
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateJWT, async (req, res) => {
     try {
         await Promotion.findByIdAndDelete(req.params.id);
         res.json({ message: 'Promotion deleted successfully' });
