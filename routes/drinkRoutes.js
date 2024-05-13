@@ -37,7 +37,7 @@ router.get('/', authenticateJWT, async (req, res) => {
       // Sử dụng RegExp để tạo một biểu thức chính quy từ giá trị tìm kiếm, thêm 'i' để tìm kiếm không phân biệt chữ hoa thường
       query = { name: { $regex: search, $options: 'i' } }
     }
-    const drinks = await Drink.find(query);
+    const drinks = await Drink.find(query).populate('promotion');
     res.json(drinks);
   } catch (err) {
     res.status(500).json({ message: err.message });

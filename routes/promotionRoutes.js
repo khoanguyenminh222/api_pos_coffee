@@ -7,7 +7,12 @@ const Promotion = require('../models/Promotion');
 // API endpoint để lấy tất cả các Promotion
 router.get('/', authenticateJWT, async (req, res) => {
     try {
-        const promotions = await Promotion.find();
+        const promotions = await Promotion.find()
+            .populate('buyItems.drink')
+            .populate('freeItem.drink')
+            .populate('fixedPriceItems.drink')
+            .populate('buyCategoryItems.category')
+            .populate('freeCategoryItems.category')
         res.json(promotions);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -19,7 +24,7 @@ router.post('/', authenticateJWT, async (req, res) => {
     try {
         // Extract promotion details from request body
         const { name, description, type, buyItems, freeItem, discountPercent, fixedPriceItems, buyCategoryItems, freeCategoryItems, startDate, endDate, isActive } = req.body;
-
+        console.log(req.body.type)
         // Create a new promotion object based on promotion type
         let newPromotion;
         switch (type) {
@@ -56,6 +61,7 @@ router.post('/', authenticateJWT, async (req, res) => {
                     endDate,
                     isActive
                 });
+                break;
             case 'buy_category_get_free':
                 newPromotion = new Promotion({
                     name,
@@ -67,6 +73,7 @@ router.post('/', authenticateJWT, async (req, res) => {
                     endDate,
                     isActive
                 });
+                break;
             default:
                 return res.status(400).json({ error: 'Invalid promotion type' });
         }
