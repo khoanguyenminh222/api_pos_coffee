@@ -48,10 +48,10 @@ const DrinkSchema = new mongoose.Schema({
       enum: ['30%', '50%', '70%']
     }
   },
-  promotion: {
+  promotions: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Promotion'
-  }
+  }]
 },
 { timestamps: true }
 );
