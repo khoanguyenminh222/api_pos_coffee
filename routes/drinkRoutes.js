@@ -39,10 +39,16 @@ router.get('/', authenticateJWT, async (req, res) => {
     }
     const drinks = await Drink.find(query).populate({
       path: 'promotions',
-      populate: {
-        path: 'buyCategoryItems.category freeCategoryItems.category',
-        model: 'Category'
-      }
+      populate: [
+        {
+          path: 'conditions.buy_category_get_free.buyCategoryItems.category',
+          model: 'Category'
+        },
+        {
+          path: 'conditions.buy_category_get_free.freeCategoryItems.drink',
+          model: 'Drink'
+        }
+      ]
     });
     res.json(drinks);
   } catch (err) {

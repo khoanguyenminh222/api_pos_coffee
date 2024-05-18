@@ -9,13 +9,15 @@ const Drink = require('../models/Drink');
 router.get('/', authenticateJWT, async (req, res) => {
     try {
         const promotions = await Promotion.find()
-            .populate('buyItems.drink')
-            .populate('freeItem.drink')
-            .populate('fixedPriceItems.drink')
-            .populate('buyCategoryItems.category')
-            .populate('freeCategoryItems.category')
+            .populate('conditions.buy_get_free.buyItems.drink')
+            .populate('conditions.buy_get_free.freeItems.drink')
+            .populate('conditions.fixed_price.fixedPriceItems.category')
+            .populate('conditions.buy_category_get_free.buyCategoryItems.category')
+            .populate('conditions.buy_category_get_free.freeCategoryItems.drink');
+            console.log(promotions)
         res.json(promotions);
     } catch (error) {
+        console.log(error.message)
         res.status(500).json({ message: error.message });
     }
 });
@@ -24,8 +26,8 @@ router.get('/', authenticateJWT, async (req, res) => {
 router.post('/', authenticateJWT, async (req, res) => {
     try {
         // Extract promotion details from request body
-        const { name, description, type, buyItems, freeItem, discountPercent, fixedPriceItems, buyCategoryItems, freeCategoryItems, startDate, endDate, isActive } = req.body;
-        console.log(req.body.type)
+        const { name, description, type, conditions, startDate, endDate, isActive } = req.body;
+        console.log(req.body)
         // Create a new promotion object based on promotion type
         let newPromotion;
         switch (type) {
@@ -34,8 +36,7 @@ router.post('/', authenticateJWT, async (req, res) => {
                     name,
                     description,
                     type,
-                    buyItems,
-                    freeItem,
+                    conditions,
                     startDate,
                     endDate,
                     isActive
@@ -47,7 +48,7 @@ router.post('/', authenticateJWT, async (req, res) => {
                     name,
                     description,
                     type,
-                    discountPercent,
+                    conditions,
                     startDate,
                     endDate,
                     isActive
@@ -59,7 +60,7 @@ router.post('/', authenticateJWT, async (req, res) => {
                     name,
                     description,
                     type,
-                    fixedPriceItems,
+                    conditions,
                     startDate,
                     endDate,
                     isActive
@@ -71,14 +72,13 @@ router.post('/', authenticateJWT, async (req, res) => {
                     name,
                     description,
                     type,
-                    buyCategoryItems,
-                    freeCategoryItems,
+                    conditions,
                     startDate,
                     endDate,
                     isActive
                 });
                 await newPromotion.save();
-                await Drink.updateMany({ categoryId: buyCategoryItems.category }, { $push: { promotions: newPromotion._id } });
+                await Drink.updateMany({ categoryId: conditions.buy_category_get_free.buyCategoryItems.category }, { $push: { promotions: newPromotion._id } });
                 break;
             default:
                 return res.status(400).json({ error: 'Invalid promotion type' });
