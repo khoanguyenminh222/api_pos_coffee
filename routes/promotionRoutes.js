@@ -14,7 +14,6 @@ router.get('/', authenticateJWT, async (req, res) => {
             .populate('conditions.fixed_price.fixedPriceItems.category')
             .populate('conditions.buy_category_get_free.buyCategoryItems.category')
             .populate('conditions.buy_category_get_free.freeCategoryItems.drink');
-            console.log(promotions)
         res.json(promotions);
     } catch (error) {
         console.log(error.message)
@@ -27,7 +26,6 @@ router.post('/', authenticateJWT, async (req, res) => {
     try {
         // Extract promotion details from request body
         const { name, description, type, conditions, startDate, endDate, isActive } = req.body;
-        console.log(req.body)
         // Create a new promotion object based on promotion type
         let newPromotion;
         switch (type) {
@@ -92,6 +90,20 @@ router.post('/', authenticateJWT, async (req, res) => {
     }
 });
 
+router.put('/setActive/:id', authenticateJWT, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const promotion = await Promotion.findById(id);
+        if (!promotion) {
+            return res.status(404).json({ error: 'Promotion not found' });
+        }
+        await Promotion.findByIdAndUpdate(req.params.id, {isActive: req.body.isActive}, { new: true });
+        res.status(200).json({ message: 'Đã chuyển đổi trạng thái' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+    
+})
 // API endpoint để sửa thông tin một Promotion
 router.put('/:id', authenticateJWT, async (req, res) => {
     try {
@@ -105,17 +117,17 @@ router.put('/:id', authenticateJWT, async (req, res) => {
             case 'buy_category_get_free':
                 let updatedPromotion = await Promotion.findByIdAndUpdate(req.params.id, req.body, { new: true });
                 // Remove reference to the old promotion from drinks
-                await Drink.updateMany({ categoryId: promotion.buyCategoryItems.category }, { $pull: { promotions: promotion._id } });
+                await Drink.updateMany({ categoryId: promotion.conditions.buy_category_get_free.buyCategoryItems.category }, { $pull: { promotions: promotion._id } });
 
                 // Update reference to the new promotion in drinks
-                await Drink.updateMany({ categoryId: promotion.buyCategoryItems.category }, { $push: { promotions: promotion._id } });
+                await Drink.updateMany({ categoryId: promotion.conditions.buy_category_get_free.buyCategoryItems.category }, { $push: { promotions: promotion._id } });
                 res.status(200).json({ message: 'Promotion buy_category_get_free updated successfully', updatedPromotion });
                 break;
             default:
                 break;
         }
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
 });
 
@@ -224,7 +236,6 @@ async function checkPromotionConditions(promotionId, drinkId, drinks, categoryId
                         }
                         return total;
                     }, 0);
-                    console.log(totalQuantityInCategory)
                     // Kiểm tra xem có ít nhất một sản phẩm đủ điều kiện hoặc tổng số lượng đủ điều kiện để nhận sản phẩm miễn phí
                     if (totalQuantityInCategory >= requiredQuantity || isAnyDrinkQualified) {
                         return promotion;
