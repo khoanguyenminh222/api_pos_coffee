@@ -47,6 +47,14 @@ router.get('/', authenticateJWT, async (req, res) => {
         {
           path: 'conditions.buy_category_get_free.freeCategoryItems.drink',
           model: 'Drink'
+        },
+        {
+          path: 'conditions.buy_get_free.buyItems.drink',
+          model: 'Drink'
+        },
+        {
+          path: 'conditions.buy_get_free.freeItems.drink',
+          model: 'Drink'
         }
       ]
     });
@@ -61,10 +69,24 @@ router.get("/category/:categoryId", authenticateJWT, async (req, res) => {
   try {
     const drinks = await Drink.find({ categoryId: req.params.categoryId }).populate({
       path: 'promotions',
-      populate: {
-        path: 'buyCategoryItems.category freeCategoryItems.category',
-        model: 'Category'
-      }
+      populate: [
+        {
+          path: 'conditions.buy_category_get_free.buyCategoryItems.category',
+          model: 'Category'
+        },
+        {
+          path: 'conditions.buy_category_get_free.freeCategoryItems.drink',
+          model: 'Drink'
+        },
+        {
+          path: 'conditions.buy_get_free.buyItems.drink',
+          model: 'Drink'
+        },
+        {
+          path: 'conditions.buy_get_free.freeItems.drink',
+          model: 'Drink'
+        }
+      ]
     });
     res.json(drinks);
   } catch (err) {

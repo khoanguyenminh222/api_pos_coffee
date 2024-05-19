@@ -40,6 +40,10 @@ router.post('/', authenticateJWT, async (req, res) => {
                     isActive
                 });
                 await newPromotion.save();
+                await Drink.updateMany(
+                    { _id: { $in: newPromotion.conditions.buy_get_free.buyItems.map(item => item.drink) } },
+                    { $push: { promotions: newPromotion._id } }
+                );
                 break;
             case 'discount':
                 newPromotion = new Promotion({
@@ -76,17 +80,21 @@ router.post('/', authenticateJWT, async (req, res) => {
                     isActive
                 });
                 await newPromotion.save();
-                await Drink.updateMany({ categoryId: conditions.buy_category_get_free.buyCategoryItems.category }, { $push: { promotions: newPromotion._id } });
+                // Update reference to the new promotion in drinks
+                await Drink.updateMany(
+                    { categoryId: { $in: newPromotion.conditions.buy_category_get_free.buyCategoryItems.map(item => item.category) } },
+                    { $push: { promotions: newPromotion._id } }
+                );
                 break;
             default:
-                return res.status(400).json({ error: 'Invalid promotion type' });
+                return res.status(400).json({ message: 'Invalid promotion type' });
         }
         // Return success response
-        res.status(201).json({ message: 'Promotion added successfully', promotion: newPromotion });
+        res.status(201).json({ message: 'Khuyến mãi được thêm thành công', promotion: newPromotion });
     } catch (error) {
         // Handle errors
         console.error('Error adding promotion:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
 
@@ -95,7 +103,7 @@ router.put('/setActive/:id', authenticateJWT, async (req, res) => {
         const { id } = req.params;
         const promotion = await Promotion.findById(id);
         if (!promotion) {
-            return res.status(404).json({ error: 'Promotion not found' });
+            return res.status(404).json({ message: 'Promotion not found' });
         }
         await Promotion.findByIdAndUpdate(req.params.id, {isActive: req.body.isActive}, { new: true });
         res.status(200).json({ message: 'Đã chuyển đổi trạng thái' });
@@ -111,17 +119,38 @@ router.put('/:id', authenticateJWT, async (req, res) => {
         const promotion = await Promotion.findById(id);
 
         if (!promotion) {
-            return res.status(404).json({ error: 'Promotion not found' });
+            return res.status(404).json({ message: 'Promotion not found' });
         }
         switch (req.body.type) {
+            case 'buy_get_free':
+                let updatedPromotionBuyGetFree = await Promotion.findByIdAndUpdate(req.params.id, req.body, { new: true });
+                // Remove reference to the old promotion from drinks
+                await Drink.updateMany(
+                    { _id: { $in: promotion.conditions.buy_get_free.buyItems.map(item => item.drink) } },
+                    { $pull: { promotions: promotion._id } }
+                );
+
+                // Update reference to the new promotion in drinks
+                await Drink.updateMany(
+                    { _id: { $in: req.body.conditions.buy_get_free.buyItems.map(item => item.drink) } },
+                    { $push: { promotions: promotion._id } }
+                );
+                res.status(200).json({ message: "Khuyến mãi 'Mua hàng được tặng' được cập nhật", updatedPromotionBuyGetFree });
+                break;
             case 'buy_category_get_free':
                 let updatedPromotion = await Promotion.findByIdAndUpdate(req.params.id, req.body, { new: true });
                 // Remove reference to the old promotion from drinks
-                await Drink.updateMany({ categoryId: promotion.conditions.buy_category_get_free.buyCategoryItems.category }, { $pull: { promotions: promotion._id } });
+                await Drink.updateMany(
+                    { categoryId: { $in: promotion.conditions.buy_category_get_free.buyCategoryItems.map(item => item.category) } },
+                    { $pull: { promotions: promotion._id } }
+                );
 
                 // Update reference to the new promotion in drinks
-                await Drink.updateMany({ categoryId: promotion.conditions.buy_category_get_free.buyCategoryItems.category }, { $push: { promotions: promotion._id } });
-                res.status(200).json({ message: 'Promotion buy_category_get_free updated successfully', updatedPromotion });
+                await Drink.updateMany(
+                    { categoryId: { $in: req.body.conditions.buy_category_get_free.buyCategoryItems.map(item => item.category) } },
+                    { $push: { promotions: promotion._id } }
+                );
+                res.status(200).json({ message: "Khuyến mãi 'Mua theo loại đồ uống được tặng' được cập nhật", updatedPromotion });
                 break;
             default:
                 break;
@@ -143,7 +172,7 @@ router.delete('/:id', authenticateJWT, async (req, res) => {
             { $pull: { promotions: { _id: req.params.id } } } // Pull the promotion from the array
         );
         console.log('Promotion deleted successfully and removed from drinks.');
-        res.status(201).json({ message: 'Promotion deleted successfully' });
+        res.status(201).json({ message: 'Khuyến mãi đã được xoá' });
     } catch (error) {
         console.error('Error deleting promotion:', error.message);
         res.status(500).json({ message: error.message });
