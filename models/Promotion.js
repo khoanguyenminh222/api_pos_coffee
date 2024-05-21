@@ -41,6 +41,9 @@ const PromotionSchema = new mongoose.Schema({
       }]
     },
     discount: {
+      totalAmount: {
+        type: Number
+      },
       discountPercent: {
         type: Number // Phần trăm giảm giá
       }

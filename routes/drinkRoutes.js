@@ -55,6 +55,10 @@ router.get('/', authenticateJWT, async (req, res) => {
         {
           path: 'conditions.buy_get_free.freeItems.drink',
           model: 'Drink'
+        },
+        {
+          path: 'conditions.fixed_price.fixedPriceItems.category',
+          model: 'Category'
         }
       ]
     });
@@ -85,6 +89,10 @@ router.get("/category/:categoryId", authenticateJWT, async (req, res) => {
         {
           path: 'conditions.buy_get_free.freeItems.drink',
           model: 'Drink'
+        },
+        {
+          path: 'conditions.fixed_price.fixedPriceItems.category',
+          model: 'Category'
         }
       ]
     });
