@@ -174,6 +174,10 @@ router.put('/:id', authenticateJWT, async (req, res) => {
                 );
                 res.status(200).json({ message: "Khuyến mãi 'Đồng giá' được cập nhật", updatedPromotionFixedPrice });
                 break;
+            case 'discount':
+                let updatedPromotionDiscount = await Promotion.findByIdAndUpdate(req.params.id, req.body, { new: true });
+                res.status(200).json({ message: "Khuyến mãi 'Giảm giá' được cập nhật", updatedPromotionDiscount });
+                break;
             default:
                 break;
         }
@@ -217,26 +221,26 @@ router.post('/check-promotion', authenticateJWT, async (req, res) => {
                 foundDrink.quantity = matchingDrink.quantity;
             }
         }
-        // Kiểm tra xem có bất kỳ đồ uống nào có chương trình khuyến mãi hay không
-        const drinksWithPromotion = foundDrinks.filter(drink => drink.promotions);
-        if (drinksWithPromotion.length === 0) {
-            res.status(200).json({ message: 'Không có đồ uống nào có chương trình khuyến mãi.' });
+        // Tìm tất cả các khuyến mãi
+        const promotions = await Promotion.find().populate('conditions.buy_get_free.buyItems.drink')
+                                                 .populate('conditions.buy_get_free.freeItems.drink')
+                                                 .populate('conditions.buy_category_get_free.buyCategoryItems.category')
+                                                 .populate('conditions.buy_category_get_free.freeCategoryItems.drink');
+        if (!promotions || promotions.length === 0) {
+            res.status(200).json({ message: 'Không có chương trình khuyến mãi nào.' });
             return;
         }
 
-        // Kiểm tra điều kiện chương trình khuyến mãi cho từng đồ uống có chương trình
-        const promotions = [];
-        for (const drink of foundDrinks) {
-            if (drink.promotions && drink.promotions.length > 0) {
-                for (const promotion of drink.promotions) {
-                    const qualifiedPromotion = await checkPromotionConditions(promotion, drink._id, foundDrinks, drink.categoryId, drink.quantity);
-                    if (qualifiedPromotion && !promotions.some(existingPromotion => existingPromotion.promotion._id.equals(qualifiedPromotion._id))) {
-                        promotions.push({ promotion: qualifiedPromotion });
-                    }
-                }
+        // Kiểm tra điều kiện chương trình khuyến mãi cho từng loại
+        const applicablePromotions = [];
+        for (const promotion of promotions) {
+            const qualifiedPromotion = await checkPromotionConditions(promotion, foundDrinks, drinks);
+            if (qualifiedPromotion && !applicablePromotions.some(existingPromotion => existingPromotion._id.equals(qualifiedPromotion._id))) {
+                applicablePromotions.push(qualifiedPromotion);
             }
         }
-        res.status(200).json({ promotions });
+
+        res.status(200).json({ promotions: applicablePromotions });
 
     } catch (error) {
         console.error(error);
@@ -244,25 +248,13 @@ router.post('/check-promotion', authenticateJWT, async (req, res) => {
     }
 })
 
-async function checkPromotionConditions(promotionId, drinkId, foundDrinks, categoryId, quantity) {
+async function checkPromotionConditions(promotion, foundDrinks, drinks) {
     try {
-        const promotion = await Promotion.findById(promotionId)
-        .populate('conditions.buy_get_free.buyItems.drink')
-            .populate('conditions.buy_get_free.freeItems.drink')
-            .populate('conditions.buy_category_get_free.buyCategoryItems.category')
-            .populate('conditions.buy_category_get_free.freeCategoryItems.drink');
-        if (!promotion) {
-            return null; // Không tìm thấy chương trình khuyến mãi
-        }
         // Kiểm tra các điều kiện tương ứng với loại chương trình khuyến mãi
         switch (promotion.type) {
             case 'buy_get_free':
                 const buyItems = promotion.conditions.buy_get_free.buyItems;
-                console.log(buyItems)
-                // Tính tổng số lượng yêu cầu của tất cả các sản phẩm trong buyItems
                 const totalRequiredQuantityBuyGetFree = buyItems.reduce((total, item) => total + item.quantity, 0);
-
-                // Tính tổng số lượng của các sản phẩm được mua có trong danh sách buyItems
                 const totalQuantityBought = buyItems.reduce((total, item) => {
                     const drink = foundDrinks.find(drink => drink._id.equals(item.drink._id));
                     if (drink) {
@@ -270,50 +262,49 @@ async function checkPromotionConditions(promotionId, drinkId, foundDrinks, categ
                     }
                     return total;
                 }, 0);
-
-                // Kiểm tra nếu bất kỳ sản phẩm nào trong foundDrinks có số lượng đủ để đáp ứng tổng số lượng của buyItems
                 const isQualifiedBuyGetFree = foundDrinks.some(drink => buyItems.some(item => drink._id.equals(item.drink._id) && drink.quantity >= totalRequiredQuantityBuyGetFree));
-
-                // Kiểm tra nếu tổng số lượng các sản phẩm mua đạt yêu cầu
                 if (totalQuantityBought >= totalRequiredQuantityBuyGetFree || isQualifiedBuyGetFree) {
                     return promotion;
                 }
-
                 return null;
             case 'discount':
-                // Kiểm tra các điều kiện khác tùy thuộc vào loại chương trình khuyến mãi
+                const { totalAmount, discountPercent } = promotion.conditions.discount;
+                const orderTotal = drinks.reduce((total, drink) => total + (drink.price * drink.quantity), 0);
+  
+                if (orderTotal >= totalAmount) {
+                    return {
+                        ...promotion._doc,
+                        discount: (orderTotal * discountPercent) / 100
+                    };
+                }
+                return null;
                 break;
             case 'fixed_price':
                 // Kiểm tra các điều kiện khác tùy thuộc vào loại chương trình khuyến mãi
                 break;
             case 'buy_category_get_free':
-                // Kiểm tra số lượng sản phẩm mua và danh mục đủ điều kiện để nhận sản phẩm miễn phí
                 const buyCategoryItems = promotion.conditions.buy_category_get_free.buyCategoryItems;
-                const categoryItem = buyCategoryItems.find(item => item.category._id.toString() === categoryId.toString());
-
-                if (!categoryItem) {
-                    return null;
-                }
-
-                const requiredQuantityBuyCategory = categoryItem.quantity;
-                // Biến để kiểm tra xem đã có ít nhất một sản phẩm đủ điều kiện hay chưa
-                let isAnyDrinkQualifiedBuyCategory = false;
-
-                // Tính tổng số lượng đồ uống trong cùng một danh mục
-                const totalQuantityInCategory = foundDrinks.reduce((total, drink) => {
-                    if (drink.categoryId.equals(categoryId)) {
-                        total += drink.quantity;
-                        // Kiểm tra xem sản phẩm có đủ điều kiện không
-                        if (drink.quantity >= requiredQuantityBuyCategory) {
-                            isAnyDrinkQualifiedBuyCategory = true;
-                        }
+                for (const foundDrink of foundDrinks) {
+                    const categoryItem = buyCategoryItems.find(item => item.category._id.toString() === foundDrink.categoryId.toString());
+                    if (!categoryItem) {
+                        continue;
                     }
-                    return total;
-                }, 0);
 
-                // Kiểm tra xem có ít nhất một sản phẩm đủ điều kiện hoặc tổng số lượng đủ điều kiện để nhận sản phẩm miễn phí
-                if (totalQuantityInCategory >= requiredQuantityBuyCategory || isAnyDrinkQualifiedBuyCategory) {
-                    return promotion;
+                    const requiredQuantityBuyCategory = categoryItem.quantity;
+                    let isAnyDrinkQualifiedBuyCategory = false;
+                    const totalQuantityInCategory = foundDrinks.reduce((total, drink) => {
+                        if (drink.categoryId.equals(foundDrink.categoryId)) {
+                            total += drink.quantity;
+                            if (drink.quantity >= requiredQuantityBuyCategory) {
+                                isAnyDrinkQualifiedBuyCategory = true;
+                            }
+                        }
+                        return total;
+                    }, 0);
+
+                    if (totalQuantityInCategory >= requiredQuantityBuyCategory || isAnyDrinkQualifiedBuyCategory) {
+                        return promotion;
+                    }
                 }
                 return null;
             default:
