@@ -6,10 +6,11 @@ const Drink = require('../models/Drink');
 const Ingredient = require('../models/Ingredient');
 const TransactionIngredient = require('../models/TransactionIngredient');
 const authenticateJWT = require('../middleware/authenticateJWT');
+const checkRole = require('../middleware/checkRole');
 
 // Route để tạo hóa đơn mới
 // Route để tạo hóa đơn mới và trừ đi thành phần nguyên liệu từ kho
-router.post('/', async (req, res) => {
+router.post('/', authenticateJWT, checkRole('test'),  async (req, res) => {
     const { userId, drinks, totalAmount } = req.body;
     
     try {
@@ -56,7 +57,7 @@ router.post('/', async (req, res) => {
             }
         }
 
-        res.status(201).json(newBill);
+        res.status(201).json({ message: 'Hoá đơn đã được tạo', newBill});
     } catch (error) {
         console.error('Lỗi khi tạo hóa đơn:', error);
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
@@ -82,7 +83,7 @@ async function generateBillCode(currentDate) {
 }
 
 // Route để xoá hóa đơn
-router.delete('/:id', authenticateJWT, async (req, res) => {
+router.delete('/:id', authenticateJWT, checkRole('test'), async (req, res) => {
     try {
         const deletedBill = await Bill.findByIdAndDelete(req.params.id);
         if (!deletedBill) {
@@ -96,13 +97,13 @@ router.delete('/:id', authenticateJWT, async (req, res) => {
 });
 
 // Route để cập nhật hóa đơn
-router.put('/:id', authenticateJWT, async (req, res) => {
+router.put('/:id', authenticateJWT, checkRole('test'), async (req, res) => {
     try {
         const updatedBill = await Bill.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!updatedBill) {
             return res.status(404).json({ message: 'Không tìm thấy hóa đơn' });
         }
-        res.json(updatedBill);
+        res.status(201).json({ message: 'Cập nhật hoá đơn thành công', updatedBill});
     } catch (error) {
         console.error('Lỗi khi cập nhật hóa đơn:', error);
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });

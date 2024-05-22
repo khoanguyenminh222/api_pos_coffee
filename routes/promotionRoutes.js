@@ -4,6 +4,7 @@ const router = express.Router();
 const authenticateJWT = require('../middleware/authenticateJWT');
 const Promotion = require('../models/Promotion');
 const Drink = require('../models/Drink');
+const checkRole = require('../middleware/checkRole');
 
 // API endpoint để lấy tất cả các Promotion
 router.get('/', authenticateJWT, async (req, res) => {
@@ -22,7 +23,7 @@ router.get('/', authenticateJWT, async (req, res) => {
 });
 
 // API endpoint để thêm một Promotion mới
-router.post('/', authenticateJWT, async (req, res) => {
+router.post('/', authenticateJWT, checkRole('test'), async (req, res) => {
     try {
         // Extract promotion details from request body
         const { name, description, type, conditions, startDate, endDate, isActive } = req.body;
@@ -105,7 +106,7 @@ router.post('/', authenticateJWT, async (req, res) => {
     }
 });
 
-router.put('/setActive/:id', authenticateJWT, async (req, res) => {
+router.put('/setActive/:id', authenticateJWT, checkRole('test'), async (req, res) => {
     try {
         const { id } = req.params;
         const promotion = await Promotion.findById(id);
@@ -120,7 +121,7 @@ router.put('/setActive/:id', authenticateJWT, async (req, res) => {
 
 })
 // API endpoint để sửa thông tin một Promotion
-router.put('/:id', authenticateJWT, async (req, res) => {
+router.put('/:id', authenticateJWT, checkRole('test'), async (req, res) => {
     try {
         const { id } = req.params;
         const promotion = await Promotion.findById(id);
@@ -187,7 +188,7 @@ router.put('/:id', authenticateJWT, async (req, res) => {
 });
 
 // API endpoint để xoá một Promotion
-router.delete('/:id', authenticateJWT, async (req, res) => {
+router.delete('/:id', authenticateJWT, checkRole('test'), async (req, res) => {
     try {
         const deletedPromotion = await Promotion.findByIdAndDelete(req.params.id);
         if (!deletedPromotion) {
@@ -270,7 +271,6 @@ async function checkPromotionConditions(promotion, foundDrinks, drinks) {
             case 'discount':
                 const { totalAmount, discountPercent } = promotion.conditions.discount;
                 const orderTotal = drinks.reduce((total, drink) => total + (drink.price * drink.quantity), 0);
-  
                 if (orderTotal >= totalAmount) {
                     return {
                         ...promotion._doc,
@@ -278,7 +278,6 @@ async function checkPromotionConditions(promotion, foundDrinks, drinks) {
                     };
                 }
                 return null;
-                break;
             case 'fixed_price':
                 // Kiểm tra các điều kiện khác tùy thuộc vào loại chương trình khuyến mãi
                 break;

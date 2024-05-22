@@ -3,6 +3,7 @@ const router = express.Router();
 const authenticateJWT = require('../middleware/authenticateJWT');
 const IngredientExpense = require('../models/IngredientExpense');
 const Ingredient = require('../models/Ingredient');
+const checkRole = require('../middleware/checkRole');
 
 function getStartEndDate(date, period) {
     let startDate, endDate;
@@ -87,7 +88,7 @@ router.get('/:period', authenticateJWT, async (req, res) => {
 });
 
 // Tạo mới một giao dịch chi tiêu nguyên liệu
-router.post('/', authenticateJWT, async (req, res) => {
+router.post('/', authenticateJWT, checkRole('test'), async (req, res) => {
     try {
         // Lấy danh sách mục chi phí nguyên liệu từ body của yêu cầu
         const expenseItems = req.body;
@@ -101,7 +102,7 @@ router.post('/', authenticateJWT, async (req, res) => {
         const createdItems = await IngredientExpense.insertMany(expenseItems);
 
         // Trả về danh sách các mục chi phí nguyên liệu đã tạo mới
-        res.status(201).json(createdItems);
+        res.status(201).json({ message: 'Thêm mới thành công', createdItems });
     } catch (error) {
         console.error('Error creating ingredient expenses:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -109,12 +110,12 @@ router.post('/', authenticateJWT, async (req, res) => {
 });
 
 // Cập nhật thông tin của một giao dịch chi tiêu nguyên liệu
-router.put('/:id', authenticateJWT, async (req, res) => {
+router.put('/:id', authenticateJWT, checkRole('test'), async (req, res) => {
     const { id } = req.params;
     const { ingredient, quantity, unit, unitPrice, totalAmount } = req.body;
     try {
         const updatedExpense = await IngredientExpense.findByIdAndUpdate(id, { ingredient, quantity, unit, unitPrice, totalAmount }, { new: true });
-        res.json(updatedExpense);
+        res.status(201).json({ message: 'Cập nhật thành công', updatedExpense});
     } catch (error) {
         console.error('Lỗi khi cập nhật giao dịch chi tiêu nguyên liệu:', error);
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
@@ -122,7 +123,7 @@ router.put('/:id', authenticateJWT, async (req, res) => {
 });
 
 // Xóa một giao dịch chi tiêu nguyên liệu
-router.delete('/:id', authenticateJWT, async (req, res) => {
+router.delete('/:id', authenticateJWT, checkRole('test'), async (req, res) => {
     const { id } = req.params;
     try {
         await IngredientExpense.findByIdAndDelete(id);

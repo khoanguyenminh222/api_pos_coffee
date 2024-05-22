@@ -5,6 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require("path");
 const authenticateJWT = require('../middleware/authenticateJWT');
+const checkRole = require('../middleware/checkRole');
 const admin = require("firebase-admin");
 
 
@@ -60,7 +61,7 @@ router.get("/:id", authenticateJWT,  async (req, res) => {
 });
 
 // Route POST: Tải hình ảnh lên Firebase và tạo mới một category
-router.post("/", authenticateJWT,  upload.single("img"), async (req, res) => {
+router.post("/", authenticateJWT, checkRole('test'), upload.single("img"), async (req, res) => {
   try {
     const file = req.file;
     if (!file) {
@@ -85,14 +86,14 @@ router.post("/", authenticateJWT,  upload.single("img"), async (req, res) => {
     });
 
     const newCategory = await category.save();
-    res.status(201).json(newCategory);
+    res.status(201).json({ message: 'Thêm mới thành công', newCategory});
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
 // Route PUT: Cập nhật hình ảnh của một category trên Firebase và trong cơ sở dữ liệu
-router.put("/:id", authenticateJWT, upload.single("img"), async (req, res) => {
+router.put("/:id", authenticateJWT, checkRole('test'), upload.single("img"), async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
     if (!category) {
@@ -125,21 +126,21 @@ router.put("/:id", authenticateJWT, upload.single("img"), async (req, res) => {
 
     // Lưu category đã cập nhật trong cơ sở dữ liệu
     const updatedCategory = await category.save();
-    res.status(201).json(updatedCategory);
+    res.status(201).json({ message: 'Cập nhật thành công', updatedCategory});
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
 // Route DELETE: Xóa một category
-router.delete("/:id", authenticateJWT,  async (req, res) => {
+router.delete("/:id", authenticateJWT, checkRole('test'),  async (req, res) => {
   try {
     const category = await Category.findOneAndDelete({ _id: req.params.id });
     if (!category) {
       return res.status(404).json({ message: "Không tìm thấy category" });
     }
 
-    res.status(201).json({ message: "Đã xóa category" });
+    res.status(201).json({ message: "Đã xóa" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 
 const User = require('../models/User');
 const authenticateJWT = require('../middleware/authenticateJWT');
+const checkRole = require('../middleware/checkRole');
 
 function removeVietnameseAccent(str) {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -152,7 +153,7 @@ router.get('/', authenticateJWT, async (req, res) => {
     }
 });
 
-router.put('/:id', authenticateJWT, async (req, res) => {
+router.put('/:id', authenticateJWT, checkRole('test'), async (req, res) => {
     try {
         const userId = req.params.id;
         let updatedUserData = req.body;
@@ -160,14 +161,14 @@ router.put('/:id', authenticateJWT, async (req, res) => {
         if (!updatedUser) {
             return res.status(404).json({ message: 'Người dùng không tồn tại' });
         }
-        res.status(201).json(updatedUser);
+        res.status(201).json({ message: 'Cập nhật thành công', updatedUser});
     } catch (error) {
         console.error('Lỗi khi cập nhật người dùng:', error);
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
     }
 });
 
-router.delete('/:id', authenticateJWT, async (req, res) => {
+router.delete('/:id', authenticateJWT, checkRole('test'), async (req, res) => {
     try {
         const userId = req.params.id;
         const deletedUser = await User.findByIdAndDelete(userId);

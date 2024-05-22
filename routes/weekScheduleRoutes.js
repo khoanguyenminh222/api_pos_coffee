@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const WeekSchedule = require('../models/WeekSchedule');
 const authenticateJWT = require('../middleware/authenticateJWT');
+const checkRole = require('../middleware/checkRole');
 // Lấy thông tin lịch làm việc của một nhân viên
 router.get('/:userId', authenticateJWT,  async (req, res) => {
     const userId = req.params.userId;
@@ -68,7 +69,7 @@ router.get('/', authenticateJWT,  async (req, res) => {
 });
 
 // Tạo lịch làm việc cho một tuần của một nhân viên
-router.post('/', authenticateJWT,  async (req, res) => {
+router.post('/', authenticateJWT, checkRole('test'), async (req, res) => {
     const { userId, weeks } = req.body;
 
     try {
@@ -97,7 +98,7 @@ router.post('/', authenticateJWT,  async (req, res) => {
         } else {
             // Nếu người dùng chưa có lịch làm việc
             const newWeekSchedule = await WeekSchedule.create({ user: userId, weeks });
-            return res.status(201).json(newWeekSchedule);
+            return res.status(201).json({ message: 'Tạo mới thành công', newWeekSchedule});
         }
     } catch (error) {
         console.error(error);
@@ -106,7 +107,7 @@ router.post('/', authenticateJWT,  async (req, res) => {
 });
 
 // Cập nhật lịch làm việc của một nhân viên
-router.put('/:userId', authenticateJWT,  async (req, res) => {
+router.put('/:userId', authenticateJWT, checkRole('test'), async (req, res) => {
     const userId = req.params.userId;
     const { startDay, endDay, newWeeks } = req.body;
 
@@ -128,7 +129,7 @@ router.put('/:userId', authenticateJWT,  async (req, res) => {
                 // Cập nhật lại tuần đó với dữ liệu mới
                 weeks[foundWeekIndex] = { startDate: startDay, endDate: endDay, ...newWeeks };
                 const updatedSchedule = await existingSchedule.save();
-                return res.status(201).json(updatedSchedule);
+                return res.status(201).json({ message: 'Cập nhật thành công', updatedSchedule });
             } else {
                 return res.status(404).json({ message: 'Không tìm thấy tuần trong khoảng thời gian đã cho.' });
             }
@@ -142,7 +143,7 @@ router.put('/:userId', authenticateJWT,  async (req, res) => {
 });
 
 // Xóa lịch làm việc của một người dùng trong một khoảng thời gian
-router.delete('/:userId', authenticateJWT,  async (req, res) => {
+router.delete('/:userId', authenticateJWT, checkRole('test'), async (req, res) => {
     const userId = req.params.userId;
     try {
         // Lấy ngày bắt đầu và kết thúc của khoảng thời gian từ query parameters

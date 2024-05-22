@@ -7,6 +7,7 @@ const path = require('path');
 const admin = require('firebase-admin');
 const Drink = require('../models/Drink');
 const authenticateJWT = require('../middleware/authenticateJWT');
+const checkRole = require('../middleware/checkRole');
 
 const tempDir = path.join(os.tmpdir(), 'uploads');
 if (!fs.existsSync(tempDir)) {
@@ -128,7 +129,7 @@ router.get('/:id', authenticateJWT, async (req, res) => {
   }
 });
 
-router.post('/', authenticateJWT, upload.single('image'), async (req, res) => {
+router.post('/', authenticateJWT, checkRole('test'), upload.single('image'), async (req, res) => {
   try {
     const file = req.file;
     if (!file) {
@@ -152,13 +153,13 @@ router.post('/', authenticateJWT, upload.single('image'), async (req, res) => {
     });
 
     const savedDrink = await newDrink.save();
-    res.status(201).json(savedDrink);
+    res.status(201).json({ message: 'Thêm mới thành công', savedDrink});
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
-router.put('/:id', authenticateJWT, upload.single('image'), async (req, res) => {
+router.put('/:id', authenticateJWT, checkRole('test'), upload.single('image'), async (req, res) => {
   try {
     const drink = await Drink.findById(req.params.id);
     if (!drink) {
@@ -183,25 +184,25 @@ router.put('/:id', authenticateJWT, upload.single('image'), async (req, res) => 
     if (options) drink.options = options;
 
     const updatedDrink = await drink.save();
-    res.status(201).json(updatedDrink);
+    res.status(201).json({ message: 'Cập nhật thành công', updatedDrink});
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
-router.delete('/:id', authenticateJWT, async (req, res) => {
+router.delete('/:id', authenticateJWT, checkRole('test'), async (req, res) => {
   try {
     const drink = await Drink.findOneAndDelete({ _id: req.params.id });
     if (!drink) {
       return res.status(404).json({ message: 'Drink not found' });
     }
-    res.status(201).json({ message: 'Drink deleted' });
+    res.status(201).json({ message: 'Đã xoá đồ uống' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-router.post('/:id/ingredients', async (req, res) => {
+router.post('/:id/ingredients', checkRole('test'), async (req, res) => {
   const { id } = req.params;
   const { ingredients } = req.body;
 

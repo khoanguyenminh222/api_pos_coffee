@@ -19,8 +19,8 @@ const UserSchema = new mongoose.Schema({
     email: { type: String},
     role: {
         type: String,
-        enum: ['admin', 'manager', 'user'], // Phân quyền cho người dùng
-        default: 'user' // Mặc định là 'user' nếu không được chỉ định
+        enum: ['admin', 'manager', 'user', 'test'], // Phân quyền cho người dùng
+        default: 'test' // Mặc định là 'user' nếu không được chỉ định
     }
 },
 { timestamps: true });
