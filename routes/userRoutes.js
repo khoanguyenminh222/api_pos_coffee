@@ -20,7 +20,7 @@ function generateUsername(fullname, phoneNumber) {
     return `${cleanedFullname}${cleanedPhoneNumber}`;
 }
 // Route để tạo người dùng mới
-router.post('/register', async (req, res) => {
+router.post('/register', checkRole('test'), async (req, res) => {
     try {
         // Nhận thông tin từ yêu cầu
         let { username, password, fullname, role, dateOfBirth, gender, address, phoneNumber, email } = req.body;
@@ -157,7 +157,13 @@ router.put('/:id', authenticateJWT, checkRole('test'), async (req, res) => {
     try {
         const userId = req.params.id;
         let updatedUserData = req.body;
+        console.log(req.body)
+        if(req.body.password){
+            updatedUserData.password = await bcrypt.hash(req.body.password, 10)
+        }
+
         const updatedUser = await User.findByIdAndUpdate(userId, updatedUserData, { new: true });
+        
         if (!updatedUser) {
             return res.status(404).json({ message: 'Người dùng không tồn tại' });
         }

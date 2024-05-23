@@ -202,7 +202,7 @@ router.delete('/:id', authenticateJWT, checkRole('test'), async (req, res) => {
   }
 });
 
-router.post('/:id/ingredients', checkRole('test'), async (req, res) => {
+router.post('/:id/ingredients', authenticateJWT, checkRole('test'), async (req, res) => {
   const { id } = req.params;
   const { ingredients } = req.body;
 
@@ -246,7 +246,7 @@ router.post('/:id/ingredients', checkRole('test'), async (req, res) => {
       // Lưu drink đã được cập nhật vào cơ sở dữ liệu
       await drink.save();
 
-      res.status(201).json({ message: 'Thành công', drink });
+      res.status(201).json({ message: 'Thêm mới thành công', drink });
   } catch (error) {
       console.error('Lỗi khi thêm ingredients vào drink:', error);
       res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });

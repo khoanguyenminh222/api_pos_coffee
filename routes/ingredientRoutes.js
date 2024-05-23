@@ -184,7 +184,7 @@ router.delete('/:id', authenticateJWT, checkRole('test'), async (req, res) => {
     if (!ingredient) {
       return res.status(404).json({ message: 'Cannot find ingredient' });
     }
-    res.status(200).json({ message: 'Xoá thành công' });
+    res.status(201).json({ message: 'Xoá thành công' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

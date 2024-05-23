@@ -93,7 +93,7 @@ router.post('/', authenticateJWT, checkRole('test'), async (req, res) => {
                 const updatedSchedule = await existingSchedule.save();
                 return res.status(201).json(updatedSchedule);
             } else {
-                return res.status(400).json({ message: 'Tuần mới phải nằm ngoài vùng của các tuần hiện có.' });
+                return res.status(400).json({ message: 'Người này đã có lịch ở tuần hiện tại.' });
             }
         } else {
             // Nếu người dùng chưa có lịch làm việc
